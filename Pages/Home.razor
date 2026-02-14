@@ -1,7 +1,237 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Magic Play Exporter</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" sm="4">
+            <MudSelect T="string" Label="Format" @bind-Value="selectedFormat" Variant="Variant.Outlined" Margin="Margin.Dense">
+                <MudSelectItem Value="@("Draft")">Draft</MudSelectItem>
+                <MudSelectItem Value="@("BattleDecks")">Battle Decks</MudSelectItem>
+            </MudSelect>
+        </MudItem>
 
-Welcome to your new app.
+        <MudItem xs="12" sm="4">
+            <MudSelect T="string" Label="Set" @bind-Value="selectedSet" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(selectedFormat != "Draft")">
+                <MudSelectItem Value="@("Magic Foundations")">Magic Foundations</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+
+        <MudItem xs="12" sm="4">
+            <MudSelect T="string" Label="Draft Type" @bind-Value="selectedDraftType" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(selectedFormat != "Draft")">
+                <MudSelectItem Value="@("Draft")">Draft</MudSelectItem>
+                <MudSelectItem Value="@("Pick-Two")">Pick-Two</MudSelectItem>
+                <MudSelectItem Value="@("Grid")">Grid</MudSelectItem>
+                <MudSelectItem Value="@("Winston")">Winston</MudSelectItem>
+                <MudSelectItem Value="@("Winchester")">Winchester</MudSelectItem>
+                <MudSelectItem Value="@("Minneapolis")">Minneapolis</MudSelectItem>
+                <MudSelectItem Value="@("Sealed")">Sealed</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudPaper Class="pa-4 mb-4">
+    <div class="d-flex justify-start mb-4">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="AddRow">
+            Add Row
+        </MudButton>
+    </div>
+
+    <!-- Header Row -->
+    <MudGrid Class="mb-2" Spacing="0">
+        <MudItem xs="12" Class="d-flex align-center">
+            <div class="line-number px-1">
+                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">#</MudText>
+            </div>
+            <div class="winner-col px-1">
+                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Winner</MudText>
+            </div>
+            @RenderPlayerHeader()
+            @RenderPlayerHeader()
+            <div class="duration-col px-1">
+                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Duration</MudText>
+            </div>
+        </MudItem>
+    </MudGrid>
+
+    <MudDivider Class="mb-4" />
+
+    <!-- Data Entry Rows -->
+    @for (int i = 0; i < gameplayRows.Count; i++)
+    {
+        int rowIndex = i;
+        var row = gameplayRows[rowIndex];
+
+        <MudGrid Class="mb-3" Spacing="0">
+            <MudItem xs="12" Class="d-flex align-center">
+                <div class="line-number px-1">
+                    <MudText Typo="Typo.body2" Class="text-muted">@(rowIndex + 1)</MudText>
+                </div>
+
+                <div class="winner-col px-1">
+                    <MudRadioGroup T="string" @bind-Value="row.Winner">
+                        <MudStack Row="true" Spacing="0">
+                            <MudRadio Value="@("P1")" Color="Color.Success" Dense="true" Size="Size.Small">P1</MudRadio>
+                            <MudRadio Value="@("P2")" Color="Color.Success" Dense="true" Size="Size.Small">P2</MudRadio>
+                        </MudStack>
+                    </MudRadioGroup>
+                </div>
+
+                @RenderPlayerEntry(row, "P1")
+                @RenderPlayerEntry(row, "P2")
+
+                <div class="duration-col px-1">
+                    <MudNumericField T="int"
+                                     @bind-Value="row.GameTimeMinutes"
+                                     Label="Minutes"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Min="0" />
+                </div>
+            </MudItem>
+        </MudGrid>
+    }
+</MudPaper>
+
+@code {
+    private RenderFragment RenderPlayerHeader() => __builder =>
+    {
+        <div class="start-col d-flex justify-center">
+            <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Start</MudText>
+        </div>
+        <div class="name-col px-1">
+            <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Name</MudText>
+        </div>
+        <div class="colors-col px-1">
+            <MudText Typo="Typo.subtitle2" Class="font-weight-bold">
+                @(selectedFormat == "BattleDecks" ? "Deck" : "Colors")
+            </MudText>
+        </div>
+    };
+
+    private RenderFragment RenderPlayerEntry(GameplayRow row, string playerKey) => __builder =>
+    {
+        var isP1 = playerKey == "P1";
+        var playerName = isP1 ? row.Player1 : row.Player2;
+        var playerDeck = isP1 ? row.Player1Deck : row.Player2Deck;
+        var colors = isP1 ? row.P1Colors : row.P2Colors;
+        var isWinner = row.Winner == playerKey;
+
+        <div class="start-col d-flex justify-center">
+            <MudRadioGroup T="string" @bind-Value="row.StartingPlayer">
+                <MudRadio Value="@(playerKey)" Color="Color.Primary" Dense="true" Size="Size.Small"></MudRadio>
+            </MudRadioGroup>
+        </div>
+        <div class="@($"name-col px-1 player-container {(isWinner ? "player-winner-bg" : "")}")">
+            <MudAutocomplete T="string"
+                             Value="isP1 ? row.Player1 : row.Player2"
+                             ValueChanged="@(v => { if(isP1) row.Player1 = v; else row.Player2 = v; })"
+                             Label="@(isP1 ? "Player 1" : "Player 2")"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
+                             SearchFunc="@SearchPlayers" />
+        </div>
+        <div class="@($"colors-col px-1 player-container {(isWinner ? "player-winner-bg" : "")}")">
+            @if (selectedFormat == "Draft")
+            {
+                <MudStack Row="true" Spacing="1">
+                    @foreach (var color in ColorDefinition.All)
+                    {
+                        <MudChip T="string"
+                                 Color="Color.Default"
+                                 Variant="Variant.Filled"
+                                 OnClick="@(() => ToggleColor(colors, color.Key))"
+                                 Size="Size.Small"
+                                 Class="color-chip"
+                                 Style="@GetColorChipStyle(color, colors.Contains(color.Key))">@color.Key</MudChip>
+                    }
+                </MudStack>
+            }
+            else
+            {
+                <MudAutocomplete T="string"
+                                 Value="isP1 ? row.Player1Deck : row.Player2Deck"
+                                 ValueChanged="@(v => { if(isP1) row.Player1Deck = v; else row.Player2Deck = v; })"
+                                 Label="Deck"
+                                 Variant="Variant.Outlined"
+                                 Margin="Margin.Dense"
+                                 SearchFunc="@SearchDecks" />
+            }
+        </div>
+    };
+
+    private string selectedFormat = "Draft";
+    private string selectedSet = "Magic Foundations";
+    private string selectedDraftType = "Draft";
+
+    private class ColorDefinition
+    {
+        public string Key { get; set; }
+        public string Bg { get; set; }
+        public string Text { get; set; }
+
+        public static readonly List<ColorDefinition> All = new()
+        {
+            new() { Key = "W", Bg = "#F0E68C", Text = "black" },
+            new() { Key = "U", Bg = "#4169E1", Text = "white" },
+            new() { Key = "B", Bg = "#2F4F4F", Text = "white" },
+            new() { Key = "R", Bg = "#DC143C", Text = "white" },
+            new() { Key = "G", Bg = "#228B22", Text = "white" }
+        };
+    }
+
+    private class GameplayRow
+    {
+        public string Player1 { get; set; } = string.Empty;
+        public string Player2 { get; set; } = string.Empty;
+        public string StartingPlayer { get; set; } = string.Empty;
+        public int GameTimeMinutes { get; set; }
+        public string Player1Deck { get; set; } = string.Empty;
+        public string Player2Deck { get; set; } = string.Empty;
+        public string Winner { get; set; } = string.Empty;
+        public HashSet<string> P1Colors { get; set; } = new();
+        public HashSet<string> P2Colors { get; set; } = new();
+    }
+
+    private List<GameplayRow> gameplayRows = new();
+
+    protected override void OnInitialized()
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            AddRow();
+        }
+    }
+
+    private void AddRow() => gameplayRows.Add(new GameplayRow());
+
+    private void ToggleColor(HashSet<string> colorSet, string color)
+    {
+        if (colorSet.Contains(color)) colorSet.Remove(color);
+        else colorSet.Add(color);
+    }
+
+    private string GetColorChipStyle(ColorDefinition color, bool isSelected)
+    {
+        var opacity = isSelected ? "1.0" : "0.3";
+        return $"background-color: {color.Bg}; color: {color.Text}; opacity: {opacity};";
+    }
+
+    private async Task<IEnumerable<string>> SearchPlayers(string value, CancellationToken token)
+    {
+        await Task.Delay(5, token);
+        var players = new[] { "Player 1", "Player 2", "Player 3", "Player 4" };
+        return string.IsNullOrEmpty(value) ? players : players.Where(p => p.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task<IEnumerable<string>> SearchDecks(string value, CancellationToken token)
+    {
+        await Task.Delay(5, token);
+        var decks = new[] { "[Battle Deck] Adventure Time v1", "[Battle Deck] Converging Domains v6", "[Battle Deck] Imperious Elves v4", "[Battle Deck] Shock Troupes v6" };
+        return string.IsNullOrEmpty(value) ? decks : decks.Where(d => d.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+}
