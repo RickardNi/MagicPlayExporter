@@ -5,7 +5,6 @@
 .player-winner-bg {
     background-color: #C8E6C9;
     border-radius: 0.25rem;
-    padding: 0.25rem;
 }
 
 .color-chip {
@@ -24,7 +23,7 @@
 }
 
 .winner-col {
-    width: 6.875rem;
+    width: 2.625rem;
     flex-shrink: 0;
 }
 
@@ -34,7 +33,8 @@
 }
 
 .name-col {
-    flex-grow: 1;
+    width: 15rem;
+    flex-shrink: 0;
 }
 
 .colors-col {
@@ -51,4 +51,8 @@
 .time-col {
     width: 7rem;
     flex-shrink: 0;
+}
+
+.flex-contents {
+    display: contents;
 }

@@ -60,9 +60,6 @@
             <div class="duration-col px-1">
                 <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Duration</MudText>
             </div>
-            <div class="winner-col px-1">
-                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Winner</MudText>
-            </div>
             @RenderPlayerHeader()
             @RenderPlayerHeader()
         </MudItem>
@@ -103,17 +100,10 @@
                     <MudText Typo="Typo.body2">@(row.GameTimeMinutes > 0 ? row.GameTimeMinutes.ToString() : "-")</MudText>
                 </div>
 
-                <div class="winner-col px-1">
-                    <MudRadioGroup T="string" @bind-Value="row.Winner">
-                        <MudStack Row="true" Spacing="0">
-                            <MudRadio Value="@("P1")" Color="Color.Success" Dense="true" Size="Size.Small">P1</MudRadio>
-                            <MudRadio Value="@("P2")" Color="Color.Success" Dense="true" Size="Size.Small">P2</MudRadio>
-                        </MudStack>
-                    </MudRadioGroup>
-                </div>
-
-                @RenderPlayerEntry(row, "P1")
-                @RenderPlayerEntry(row, "P2")
+                <MudRadioGroup T="string" @bind-Value="row.Winner" Class="flex-contents">
+                    @RenderPlayerEntry(row, "P1")
+                    @RenderPlayerEntry(row, "P2")
+                </MudRadioGroup>
             </MudItem>
         </MudGrid>
     }
@@ -122,6 +112,9 @@
 @code {
     private RenderFragment RenderPlayerHeader() => __builder =>
     {
+        <div class="winner-col d-flex justify-center">
+            <MudText Typo="Typo.subtitle2" Class="font-weight-bold">W</MudText>
+        </div>
         <div class="start-col d-flex justify-center">
             <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Start</MudText>
         </div>
@@ -143,6 +136,9 @@
         var colors = isP1 ? row.P1Colors : row.P2Colors;
         var isWinner = row.Winner == playerKey;
 
+        <div class="winner-col d-flex justify-center">
+            <MudRadio Value="@(playerKey)" Color="Color.Success" Dense="true" Size="Size.Small"></MudRadio>
+        </div>
         <div class="start-col d-flex justify-center">
             <MudRadioGroup T="string" @bind-Value="row.StartingPlayer">
                 <MudRadio Value="@(playerKey)" Color="Color.Primary" Dense="true" Size="Size.Small"></MudRadio>
