@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject ISettingsStorage SettingsStorage
+@inject IDialogService DialogService
 
 <PageTitle>Magic Play Exporter</PageTitle>
 
@@ -73,20 +74,26 @@
 </MudExpansionPanels>
 
 <MudPaper Class="pa-4 mb-4">
-    <div class="d-flex justify-start mb-4 gap-2">
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="AddRow">
-            Add
-        </MudButton>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Success"
-                   StartIcon="@Icons.Material.Filled.IosShare"
-                   OnClick="ExportData">
-            Export
-        </MudButton>
-    </div>
+<div class="d-flex justify-start mb-4 gap-2">
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="AddRow">
+        Add
+    </MudButton>
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Success"
+               StartIcon="@Icons.Material.Filled.IosShare"
+               OnClick="ExportData">
+        Export
+    </MudButton>
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Error"
+               StartIcon="@Icons.Material.Filled.Delete"
+               OnClick="ClearAllData">
+        Clear all data
+    </MudButton>
+</div>
 
     <!-- Header Row -->
     <MudGrid Class="mb-2" Spacing="0">
@@ -128,7 +135,7 @@
                                    InputType="InputType.Time"
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense"
-                                   @onblur="@(() => OnStartTimeBlur(row))" />
+                                   @onblur="@(() => { OnStartTimeBlur(row); MarkFormDirty(); })" />
                 </div>
 
                 <div class="time-col px-1">
@@ -136,7 +143,8 @@
                                    @bind-Value="row.EndTime"
                                    InputType="InputType.Time"
                                    Variant="Variant.Outlined"
-                                   Margin="Margin.Dense" />
+                                   Margin="Margin.Dense"
+                                   @onblur="@(() => MarkFormDirty())" />
                 </div>
 
                 <div class="duration-col px-1">
@@ -185,20 +193,20 @@
 
         <div class="winner-col d-flex justify-center">
             <div class="@($"winner-crown-btn {(isWinner ? "selected" : "not-selected")}")"
-                 @onclick="@(() => row.Winner = playerKey)">
+                 @onclick="@(() => { row.Winner = playerKey; MarkFormDirty(); })">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-crown-icon lucide-crown"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
             </div>
         </div>
         <div class="start-col d-flex justify-center">
             <div class="@($"start-player-btn {(row.StartingPlayer == playerKey ? "selected" : "not-selected")}")"
-                 @onclick="@(() => row.StartingPlayer = playerKey)">
+                 @onclick="@(() => { row.StartingPlayer = playerKey; MarkFormDirty(); })">
                 1
             </div>
         </div>
         <div class="@($"name-col px-1 player-container {(isWinner ? "player-winner-bg" : "")}")">
             <MudAutocomplete T="string"
                              Value="isP1 ? row.Player1 : row.Player2"
-                             ValueChanged="@(v => { if(isP1) row.Player1 = v; else row.Player2 = v; })"
+                             ValueChanged="@(v => { if(isP1) row.Player1 = v; else row.Player2 = v; MarkFormDirty(); })"
                              Label="@(isP1 ? "Player 1" : "Player 2")"
                              Variant="Variant.Outlined"
                              Margin="Margin.Dense"
@@ -227,7 +235,7 @@
             {
                 <MudAutocomplete T="string"
                                  Value="isP1 ? row.Player1Deck : row.Player2Deck"
-                                 ValueChanged="@(v => { if(isP1) row.Player1Deck = v; else row.Player2Deck = v; })"
+                                 ValueChanged="@(v => { if(isP1) row.Player1Deck = v; else row.Player2Deck = v; MarkFormDirty(); })"
                                  Label="Deck"
                                  Variant="Variant.Outlined"
                                  Margin="Margin.Dense"
@@ -276,6 +284,7 @@
     private string playersJsonImport = string.Empty;
     private string importMessage = string.Empty;
     private Color importMessageColor = Color.Default;
+    private bool isFormDirty = false;
 
     private static readonly string[] ColorKeys = { "W", "U", "B", "R", "G" };
 
@@ -350,6 +359,7 @@
     {
         if (colorSet.Contains(color)) colorSet.Remove(color);
         else colorSet.Add(color);
+        MarkFormDirty();
     }
 
     private string GetColorChipStyle(bool isSelected)
@@ -363,6 +373,14 @@
     private async Task ImportPlayers()
     {
         importMessage = string.Empty;
+
+        if (isFormDirty)
+        {
+            importMessage = "Cannot import players while there are unsaved changes in the form. Please export or clear your data first.";
+            importMessageColor = Color.Error;
+            return;
+        }
+
         var json = (playersJsonImport ?? string.Empty).Trim();
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -440,5 +458,30 @@
         await Task.Delay(5, token);
         var decks = new[] { "Adventure Time v1", "Converging Domains v6", "Imperious Elves v4", "Shock Troupes v6" };
         return string.IsNullOrEmpty(value) ? decks : decks.Where(d => d.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void MarkFormDirty()
+    {
+        isFormDirty = true;
+    }
+
+    private async Task ClearAllData()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Clear All Data",
+            "Are you sure you want to clear all data? This will remove all entries and cannot be undone.",
+            yesText: "Clear",
+            cancelText: "Cancel");
+
+        if (result == true)
+        {
+            gameplayRows.Clear();
+            for (int i = 0; i < 12; i++)
+            {
+                AddRow();
+            }
+            isFormDirty = false;
+            StateHasChanged();
+        }
     }
 }
