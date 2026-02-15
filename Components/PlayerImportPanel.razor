@@ -1,0 +1,128 @@
+@namespace MagicPlayExporter.Components
+@using MagicPlayExporter.Models
+@using System.Text.Json
+
+@inject ISettingsStorage SettingsStorage
+
+<MudExpansionPanel Text="Players">
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudList T="string" Dense="true">
+                @foreach (var player in PlayerList)
+                {
+                    <MudListItem Text="@player.Name" Icon="@Icons.Material.Filled.Person" />
+                }
+            </MudList>
+        </MudItem>
+        <MudItem xs="12" md="8">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Import Players</MudText>
+            <MudTextField T="string"
+                          Label="JSON Content"
+                          @bind-Value="playersJsonImport"
+                          Variant="Variant.Outlined"
+                          Lines="5"
+                          Class="mb-2" />
+            <div class="d-flex align-center gap-4">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.FileUpload"
+                           OnClick="ImportPlayers">
+                    Import
+                </MudButton>
+                @if (!string.IsNullOrEmpty(importMessage))
+                {
+                    <MudText Color="@importMessageColor" Typo="Typo.body2">@importMessage</MudText>
+                }
+            </div>
+        </MudItem>
+    </MudGrid>
+</MudExpansionPanel>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<Player> PlayerList { get; set; } = new();
+
+    [Parameter]
+    public bool IsFormDirty { get; set; }
+
+    [Parameter]
+    public EventCallback<List<Player>> OnPlayersChanged { get; set; }
+
+    private string playersJsonImport = string.Empty;
+    private string importMessage = string.Empty;
+    private Color importMessageColor = Color.Default;
+
+    private async Task ImportPlayers()
+    {
+        importMessage = string.Empty;
+
+        if (IsFormDirty)
+        {
+            importMessage = "Cannot import players while there are unsaved changes in the form. Please export or clear your data first.";
+            importMessageColor = Color.Error;
+            return;
+        }
+
+        var json = (playersJsonImport ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            importMessage = "Please paste JSON content first.";
+            importMessageColor = Color.Error;
+            return;
+        }
+
+        if (json.EndsWith(",")) json = json.TrimEnd(',').Trim();
+        if (json.StartsWith("\"players\"") || json.StartsWith("players"))
+        {
+            json = "{" + json + "}";
+        }
+
+        try
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip
+            };
+
+            List<Player>? imported = null;
+
+            using (JsonDocument doc = JsonDocument.Parse(json, new JsonDocumentOptions { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip }))
+            {
+                if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    imported = JsonSerializer.Deserialize<List<Player>>(doc.RootElement.GetRawText(), options);
+                }
+                else if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    if (doc.RootElement.TryGetProperty("players", out var playersElement) && playersElement.ValueKind == JsonValueKind.Array)
+                    {
+                        imported = JsonSerializer.Deserialize<List<Player>>(playersElement.GetRawText(), options);
+                    }
+                }
+            }
+
+            if (imported != null)
+            {
+                PlayerList = imported;
+                await SettingsStorage.SaveSettingAsync(LocalStorageSettings.Players, PlayerList);
+                await OnPlayersChanged.InvokeAsync(PlayerList);
+                playersJsonImport = string.Empty;
+                importMessage = $"Successfully imported {imported.Count} players.";
+                importMessageColor = Color.Success;
+                StateHasChanged();
+            }
+            else
+            {
+                importMessage = "Could not find a list of players in the JSON.";
+                importMessageColor = Color.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            importMessage = $"Import failed: {ex.Message}";
+            importMessageColor = Color.Error;
+        }
+    }
+}

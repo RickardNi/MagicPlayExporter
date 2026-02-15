@@ -1,45 +1,3 @@
-.player-container {
-    min-width: 0;
-}
-
-.player-winner-bg {
-    background-color: #C8E6C9;
-    border-radius: 0.25rem;
-}
-
-.color-chip {
-    cursor: pointer;
-    width: 1.625rem;
-    height: 1.625rem;
-    min-width: 1.625rem;
-    justify-content: center;
-    border-radius: 50%;
-    padding: 0;
-    background-color: transparent !important;
-    box-shadow: none !important;
-    box-sizing: border-box;
-}
-
-::deep .mud-chip.mud-chip-size-small {
-    padding: 0;
-}
-
-.color-chip :deep(.mud-chip-content) {
-    padding: 0 !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Remove the ripple/hover background */
-.color-chip:hover, .color-chip:focus, .color-chip.mud-chip-clickable:hover {
-    background-color: transparent !important;
-}
-
-.color-chip :deep(.mud-ripple) {
-    display: none !important;
-}
-
 .line-number {
     width: 1.875rem;
     flex-shrink: 0;
@@ -48,53 +6,6 @@
 .winner-col {
     width: 2.625rem;
     flex-shrink: 0;
-}
-
-.winner-crown-btn {
-    width: 2rem;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.winner-crown-btn.not-selected {
-    opacity: 0.15;
-    color: gray;
-}
-
-.winner-crown-btn.selected {
-    background-color: #2E7D32;
-    color: white;
-    opacity: 1;
-}
-
-.start-player-btn {
-    width: 2rem;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: bold;
-    font-size: 1rem;
-    user-select: none;
-}
-
-.start-player-btn.not-selected {
-    opacity: 0.15;
-    color: gray;
-}
-
-.start-player-btn.selected {
-    background-color: #594AE2;
-    color: white;
-    opacity: 1;
 }
 
 .start-col {

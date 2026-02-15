@@ -1,0 +1,120 @@
+@namespace MagicPlayExporter.Components
+@using MagicPlayExporter.Models
+
+<div class="winner-col d-flex justify-center">
+    <div class="@($"winner-crown-btn {(IsWinner ? "selected" : "not-selected")}")"
+         @onclick="OnWinnerClick">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-crown-icon lucide-crown">
+            <path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/>
+            <path d="M5 21h14"/>
+        </svg>
+    </div>
+</div>
+
+<div class="start-col d-flex justify-center">
+    <div class="@($"start-player-btn {(IsStartingPlayer ? "selected" : "not-selected")}")"
+         @onclick="OnStartingPlayerClick">
+        1
+    </div>
+</div>
+
+<div class="@($"name-col px-1 player-container {(IsWinner ? "player-winner-bg" : "")}")">
+    <MudAutocomplete T="string"
+                     Value="@PlayerName"
+                     ValueChanged="@OnPlayerNameChanged"
+                     Label="@Label"
+                     Variant="Variant.Outlined"
+                     Margin="Margin.Dense"
+                     SearchFunc="@SearchPlayers" />
+</div>
+
+<div class="@($"colors-col px-1 player-container {(IsWinner ? "player-winner-bg" : "")}")">
+    @if (Format == "Draft")
+    {
+        var canSelectColors = !string.IsNullOrWhiteSpace(PlayerName);
+        <MudStack Row="true" Spacing="0">
+            @foreach (var key in ColorKeys)
+            {
+                var isSelected = Colors.Contains(key);
+                <MudChip T="string"
+                         Color="Color.Default"
+                         Variant="Variant.Text"
+                         OnClick="@(() => { if (canSelectColors) OnColorClick.InvokeAsync(key); })"
+                         Size="Size.Small"
+                         Class="@($"color-chip {(isSelected ? "selected" : "not-selected")}")"
+                         Ripple="false"
+                         Disabled="@(!canSelectColors)"
+                         Style="@(GetChipStyle(isSelected, canSelectColors))">
+                    <ColorChip ColorKey="@key" />
+                </MudChip>
+            }
+        </MudStack>
+    }
+    else
+    {
+        <MudAutocomplete T="string"
+                         Value="@DeckName"
+                         ValueChanged="@OnDeckChanged"
+                         Label="Deck"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         SearchFunc="@SearchDecks" />
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string PlayerName { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string DeckName { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public HashSet<string> Colors { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public bool IsWinner { get; set; }
+
+    [Parameter, EditorRequired]
+    public bool IsStartingPlayer { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Format { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public EventCallback OnWinnerClick { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback OnStartingPlayerClick { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<string> OnPlayerNameChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<string> OnDeckChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnColorClick { get; set; }
+
+    [Parameter, EditorRequired]
+    public Func<string, CancellationToken, Task<IEnumerable<string>>> SearchPlayers { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public Func<string, CancellationToken, Task<IEnumerable<string>>> SearchDecks { get; set; } = null!;
+
+    private static readonly string[] ColorKeys = { "W", "U", "B", "R", "G" };
+
+    private string GetChipStyle(bool isSelected, bool isEnabled)
+    {
+        // Always have a border to prevent shifting, just make it transparent when not selected
+        var border = "border: 1px solid " + (isSelected ? "rgba(0,0,0,0.7)" : "transparent") + " !important;";
+        var opacity = "opacity: " + (isSelected ? "1.0" : "0.15") + ";";
+        var shadow = isSelected ? "filter: drop-shadow(0px 2px 1px rgba(0,0,0,0.9));" : "";
+        var cursor = !isEnabled ? "cursor: not-allowed;" : "";
+
+        return $"{border} {opacity} {shadow} {cursor}";
+    }
+}
