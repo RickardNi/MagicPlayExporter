@@ -206,7 +206,7 @@
         <div class="@($"name-col px-1 player-container {(isWinner ? "player-winner-bg" : "")}")">
             <MudAutocomplete T="string"
                              Value="isP1 ? row.Player1 : row.Player2"
-                             ValueChanged="@(v => { if(isP1) row.Player1 = v; else row.Player2 = v; MarkFormDirty(); })"
+                             ValueChanged="@(v => { OnPlayerNameChanged(row, isP1, v); MarkFormDirty(); })"
                              Label="@(isP1 ? "Player 1" : "Player 2")"
                              Variant="Variant.Outlined"
                              Margin="Margin.Dense"
@@ -215,17 +215,19 @@
         <div class="@($"colors-col px-1 player-container {(isWinner ? "player-winner-bg" : "")}")">
             @if (selectedFormat == "Draft")
             {
+                var canSelectColors = !string.IsNullOrWhiteSpace(playerName);
                 <MudStack Row="true" Spacing="0">
                     @foreach (var key in ColorKeys)
                     {
                         <MudChip T="string"
                                  Color="Color.Default"
                                  Variant="Variant.Text"
-                                 OnClick="@(() => ToggleColor(colors, key))"
+                                 OnClick="@(() => { if (canSelectColors) ToggleColorForPlayer(playerName, key); })"
                                  Size="Size.Small"
                                  Class="color-chip"
                                  Ripple="false"
-                                 Style="@GetColorChipStyle(colors.Contains(key))">
+                                 Disabled="@(!canSelectColors)"
+                                 Style="@GetColorChipStyle(colors.Contains(key), canSelectColors)">
                             @RenderManaIcon(key)
                         </MudChip>
                     }
@@ -285,6 +287,7 @@
     private string importMessage = string.Empty;
     private Color importMessageColor = Color.Default;
     private bool isFormDirty = false;
+    private Dictionary<string, HashSet<string>> playerColorsMap = new();
 
     private static readonly string[] ColorKeys = { "W", "U", "B", "R", "G" };
 
@@ -355,15 +358,83 @@
         // TODO: Implement export logic
     }
 
-    private void ToggleColor(HashSet<string> colorSet, string color)
+    private void OnPlayerNameChanged(GameplayRow row, bool isP1, string newPlayerName)
     {
-        if (colorSet.Contains(color)) colorSet.Remove(color);
-        else colorSet.Add(color);
-        MarkFormDirty();
+        if (isP1)
+        {
+            row.Player1 = newPlayerName;
+        }
+        else
+        {
+            row.Player2 = newPlayerName;
+        }
+
+        if (selectedFormat == "Draft" && !string.IsNullOrWhiteSpace(newPlayerName))
+        {
+            if (!playerColorsMap.ContainsKey(newPlayerName))
+            {
+                playerColorsMap[newPlayerName] = new HashSet<string>();
+            }
+
+            var targetColors = isP1 ? row.P1Colors : row.P2Colors;
+            targetColors.Clear();
+            foreach (var color in playerColorsMap[newPlayerName])
+            {
+                targetColors.Add(color);
+            }
+        }
     }
 
-    private string GetColorChipStyle(bool isSelected)
+    private void ToggleColorForPlayer(string playerName, string color)
     {
+        if (string.IsNullOrWhiteSpace(playerName) || selectedFormat != "Draft")
+            return;
+
+        if (!playerColorsMap.ContainsKey(playerName))
+        {
+            playerColorsMap[playerName] = new HashSet<string>();
+        }
+
+        if (playerColorsMap[playerName].Contains(color))
+        {
+            playerColorsMap[playerName].Remove(color);
+        }
+        else
+        {
+            playerColorsMap[playerName].Add(color);
+        }
+
+        foreach (var row in gameplayRows)
+        {
+            if (row.Player1 == playerName)
+            {
+                row.P1Colors.Clear();
+                foreach (var c in playerColorsMap[playerName])
+                {
+                    row.P1Colors.Add(c);
+                }
+            }
+            if (row.Player2 == playerName)
+            {
+                row.P2Colors.Clear();
+                foreach (var c in playerColorsMap[playerName])
+                {
+                    row.P2Colors.Add(c);
+                }
+            }
+        }
+
+        MarkFormDirty();
+        StateHasChanged();
+    }
+
+    private string GetColorChipStyle(bool isSelected, bool isEnabled = true)
+    {
+        if (!isEnabled)
+        {
+            return "background-color: transparent !important; opacity: 0.15; cursor: not-allowed; border: 1px solid transparent !important;";
+        }
+
         var opacity = isSelected ? "1.0" : "0.15";
         var shadow = isSelected ? "filter: drop-shadow(0px 2px 1px rgba(0,0,0,0.9));" : "";
         var border = isSelected ? "border: 1px solid rgba(0,0,0,0.7) !important;" : "border: 1px solid transparent !important;";
@@ -476,6 +547,7 @@
         if (result == true)
         {
             gameplayRows.Clear();
+            playerColorsMap.Clear();
             for (int i = 0; i < 12; i++)
             {
                 AddRow();
