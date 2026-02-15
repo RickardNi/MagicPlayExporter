@@ -3,21 +3,25 @@
 <PageTitle>Magic Play Exporter</PageTitle>
 
 <MudPaper Class="pa-4 mb-4">
-    <MudGrid>
-        <MudItem xs="12" sm="4">
+    <MudGrid Spacing="4">
+        <MudItem xs="12" sm="2">
+            <MudDatePicker Label="Date" @bind-Date="playDate" DateFormat="yyyy-MM-dd" Variant="Variant.Outlined" Margin="Margin.Dense" />
+        </MudItem>
+
+        <MudItem xs="12" sm="2">
             <MudSelect T="string" Label="Format" @bind-Value="selectedFormat" Variant="Variant.Outlined" Margin="Margin.Dense">
                 <MudSelectItem Value="@("Draft")">Draft</MudSelectItem>
                 <MudSelectItem Value="@("BattleDecks")">Battle Decks</MudSelectItem>
             </MudSelect>
         </MudItem>
 
-        <MudItem xs="12" sm="4">
+        <MudItem xs="12" sm="3">
             <MudSelect T="string" Label="Set" @bind-Value="selectedSet" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(selectedFormat != "Draft")">
                 <MudSelectItem Value="@("Magic Foundations")">Magic Foundations</MudSelectItem>
             </MudSelect>
         </MudItem>
 
-        <MudItem xs="12" sm="4">
+        <MudItem xs="12" sm="5">
             <MudSelect T="string" Label="Draft Type" @bind-Value="selectedDraftType" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(selectedFormat != "Draft")">
                 <MudSelectItem Value="@("Draft")">Draft</MudSelectItem>
                 <MudSelectItem Value="@("Pick-Two")">Pick-Two</MudSelectItem>
@@ -37,7 +41,7 @@
                    Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add"
                    OnClick="AddRow">
-            Add Row
+            Add
         </MudButton>
     </div>
 
@@ -47,14 +51,20 @@
             <div class="line-number px-1">
                 <MudText Typo="Typo.subtitle2" Class="font-weight-bold">#</MudText>
             </div>
+            <div class="time-col px-1">
+                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Start</MudText>
+            </div>
+            <div class="time-col px-1">
+                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">End</MudText>
+            </div>
+            <div class="duration-col px-1">
+                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Duration</MudText>
+            </div>
             <div class="winner-col px-1">
                 <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Winner</MudText>
             </div>
             @RenderPlayerHeader()
             @RenderPlayerHeader()
-            <div class="duration-col px-1">
-                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Duration</MudText>
-            </div>
         </MudItem>
     </MudGrid>
 
@@ -66,10 +76,30 @@
         int rowIndex = i;
         var row = gameplayRows[rowIndex];
 
-        <MudGrid Class="mb-3" Spacing="0">
+        <MudGrid @key="row" Class="mb-3" Spacing="0">
             <MudItem xs="12" Class="d-flex align-center">
                 <div class="line-number px-1">
                     <MudText Typo="Typo.body2" Class="text-muted">@(rowIndex + 1)</MudText>
+                </div>
+
+                <div class="time-col px-1">
+                    <MudTextField T="TimeSpan?"
+                                   @bind-Value="row.StartTime"
+                                   InputType="InputType.Time"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense" />
+                </div>
+
+                <div class="time-col px-1">
+                    <MudTextField T="TimeSpan?"
+                                   @bind-Value="row.EndTime"
+                                   InputType="InputType.Time"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense" />
+                </div>
+
+                <div class="duration-col px-1">
+                    <MudText Typo="Typo.body2">@(row.GameTimeMinutes > 0 ? row.GameTimeMinutes.ToString() : "-")</MudText>
                 </div>
 
                 <div class="winner-col px-1">
@@ -83,15 +113,6 @@
 
                 @RenderPlayerEntry(row, "P1")
                 @RenderPlayerEntry(row, "P2")
-
-                <div class="duration-col px-1">
-                    <MudNumericField T="int"
-                                     @bind-Value="row.GameTimeMinutes"
-                                     Label="Minutes"
-                                     Variant="Variant.Outlined"
-                                     Margin="Margin.Dense"
-                                     Min="0" />
-                </div>
             </MudItem>
         </MudGrid>
     }
@@ -164,6 +185,7 @@
         </div>
     };
 
+    private DateTime? playDate = DateTime.Today;
     private string selectedFormat = "Draft";
     private string selectedSet = "Magic Foundations";
     private string selectedDraftType = "Draft";
@@ -189,7 +211,37 @@
         public string Player1 { get; set; } = string.Empty;
         public string Player2 { get; set; } = string.Empty;
         public string StartingPlayer { get; set; } = string.Empty;
-        public int GameTimeMinutes { get; set; }
+        
+        private TimeSpan? _startTime;
+        public TimeSpan? StartTime
+        {
+            get => _startTime;
+            set
+            {
+                _startTime = value;
+                if (_startTime.HasValue && !EndTime.HasValue)
+                {
+                    var end = _startTime.Value.Add(TimeSpan.FromMinutes(15));
+                    if (end.TotalDays >= 1) end = end.Subtract(TimeSpan.FromDays(1));
+                    EndTime = end;
+                }
+            }
+        }
+        
+        public TimeSpan? EndTime { get; set; }
+        public int GameTimeMinutes
+        {
+            get
+            {
+                if (StartTime.HasValue && EndTime.HasValue)
+                {
+                    var diff = EndTime.Value - StartTime.Value;
+                    if (diff.Ticks < 0) diff = diff.Add(TimeSpan.FromDays(1));
+                    return (int)diff.TotalMinutes;
+                }
+                return 0;
+            }
+        }
         public string Player1Deck { get; set; } = string.Empty;
         public string Player2Deck { get; set; } = string.Empty;
         public string Winner { get; set; } = string.Empty;

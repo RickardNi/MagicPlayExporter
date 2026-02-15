@@ -43,6 +43,12 @@
 }
 
 .duration-col {
-    width: 5.625rem;
+    width: 5rem;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.time-col {
+    width: 8.5rem;
     flex-shrink: 0;
 }
