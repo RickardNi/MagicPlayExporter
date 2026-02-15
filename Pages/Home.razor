@@ -87,7 +87,8 @@
                                    @bind-Value="row.StartTime"
                                    InputType="InputType.Time"
                                    Variant="Variant.Outlined"
-                                   Margin="Margin.Dense" />
+                                   Margin="Margin.Dense"
+                                   @onblur="@(() => OnStartTimeBlur(row))" />
                 </div>
 
                 <div class="time-col px-1">
@@ -211,23 +212,7 @@
         public string Player1 { get; set; } = string.Empty;
         public string Player2 { get; set; } = string.Empty;
         public string StartingPlayer { get; set; } = string.Empty;
-        
-        private TimeSpan? _startTime;
-        public TimeSpan? StartTime
-        {
-            get => _startTime;
-            set
-            {
-                _startTime = value;
-                if (_startTime.HasValue && !EndTime.HasValue)
-                {
-                    var end = _startTime.Value.Add(TimeSpan.FromMinutes(15));
-                    if (end.TotalDays >= 1) end = end.Subtract(TimeSpan.FromDays(1));
-                    EndTime = end;
-                }
-            }
-        }
-        
+        public TimeSpan? StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
         public int GameTimeMinutes
         {
@@ -250,6 +235,16 @@
     }
 
     private List<GameplayRow> gameplayRows = new();
+
+    private void OnStartTimeBlur(GameplayRow row)
+    {
+        if (row.StartTime.HasValue && !row.EndTime.HasValue)
+        {
+            var end = row.StartTime.Value.Add(TimeSpan.FromMinutes(15));
+            if (end.TotalDays >= 1) end = end.Subtract(TimeSpan.FromDays(1));
+            row.EndTime = end;
+        }
+    }
 
     protected override void OnInitialized()
     {
