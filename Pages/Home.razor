@@ -192,9 +192,9 @@
 
     private class ColorDefinition
     {
-        public string Key { get; set; }
-        public string Bg { get; set; }
-        public string Text { get; set; }
+        public required string Key { get; set; }
+        public required string Bg { get; set; }
+        public required string Text { get; set; }
 
         public static readonly List<ColorDefinition> All = new()
         {
