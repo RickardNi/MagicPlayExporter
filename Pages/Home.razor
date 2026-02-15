@@ -36,12 +36,18 @@
 </MudPaper>
 
 <MudPaper Class="pa-4 mb-4">
-    <div class="d-flex justify-start mb-4">
+    <div class="d-flex justify-start mb-4 gap-2">
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add"
                    OnClick="AddRow">
             Add
+        </MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Success"
+                   StartIcon="@Icons.Material.Filled.IosShare"
+                   OnClick="ExportData">
+            Export
         </MudButton>
     </div>
 
@@ -102,6 +108,13 @@
 
                 @RenderPlayerEntry(row, "P1")
                 @RenderPlayerEntry(row, "P2")
+
+                <div class="delete-col px-1">
+                    <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" 
+                                   Color="Color.Error" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => RemoveRow(row))" />
+                </div>
             </MudItem>
         </MudGrid>
     }
@@ -122,6 +135,7 @@
                 @(selectedFormat == "BattleDecks" ? "Deck" : "Colors")
             </MudText>
         </div>
+        <div class="delete-col"></div>
     };
 
     private RenderFragment RenderPlayerEntry(GameplayRow row, string playerKey) => __builder =>
@@ -271,6 +285,13 @@
     }
 
     private void AddRow() => gameplayRows.Add(new GameplayRow());
+
+    private void RemoveRow(GameplayRow row) => gameplayRows.Remove(row);
+
+    private void ExportData()
+    {
+        // TODO: Implement export logic
+    }
 
     private void ToggleColor(HashSet<string> colorSet, string color)
     {

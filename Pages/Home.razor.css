@@ -123,6 +123,13 @@
     flex-shrink: 0;
 }
 
+.delete-col {
+    width: 3rem;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+}
+
 .flex-contents {
     display: contents;
 }
