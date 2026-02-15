@@ -1,4 +1,5 @@
 ﻿@page "/"
+@inject ISettingsStorage SettingsStorage
 
 <PageTitle>Magic Play Exporter</PageTitle>
 
@@ -317,11 +318,22 @@
         }
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        await LoadPlayersFromStorageAsync();
+
         for (int i = 0; i < 12; i++)
         {
             AddRow();
+        }
+    }
+
+    private async Task LoadPlayersFromStorageAsync()
+    {
+        var savedPlayers = await SettingsStorage.GetSettingAsync<List<Player>>(LocalStorageSettings.Players);
+        if (savedPlayers != null && savedPlayers.Count > 0)
+        {
+            playerList = savedPlayers;
         }
     }
 
@@ -348,7 +360,7 @@
         return $"background-color: transparent !important; opacity: {opacity}; {shadow} {border}";
     }
 
-    private void ImportPlayers()
+    private async Task ImportPlayers()
     {
         importMessage = string.Empty;
         var json = (playersJsonImport ?? string.Empty).Trim();
@@ -361,7 +373,7 @@
 
         // Handle common copy-paste artifacts
         if (json.EndsWith(",")) json = json.TrimEnd(',').Trim();
-        
+
         // If it looks like a property snippet "players": [...], wrap it in braces to make it valid JSON
         if (json.StartsWith("\"players\"") || json.StartsWith("players"))
         {
@@ -397,6 +409,7 @@
             if (imported != null)
             {
                 playerList = imported;
+                await SettingsStorage.SaveSettingAsync(LocalStorageSettings.Players, playerList);
                 playersJsonImport = string.Empty;
                 importMessage = $"Successfully imported {imported.Count} players.";
                 importMessageColor = Color.Success;
