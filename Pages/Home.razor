@@ -351,7 +351,39 @@
 
     private void AddRow() => gameplayRows.Add(new GameplayRow());
 
-    private void RemoveRow(GameplayRow row) => gameplayRows.Remove(row);
+    private async Task RemoveRow(GameplayRow row)
+    {
+        if (HasRowData(row))
+        {
+            bool? result = await DialogService.ShowMessageBox(
+                "Remove Row",
+                "This row contains data. Are you sure you want to remove it?",
+                yesText: "Remove",
+                cancelText: "Cancel");
+
+            if (result != true)
+            {
+                return;
+            }
+        }
+
+        gameplayRows.Remove(row);
+        MarkFormDirty();
+    }
+
+    private bool HasRowData(GameplayRow row)
+    {
+        return !string.IsNullOrWhiteSpace(row.Player1)
+            || !string.IsNullOrWhiteSpace(row.Player2)
+            || row.StartTime.HasValue
+            || row.EndTime.HasValue
+            || !string.IsNullOrWhiteSpace(row.Player1Deck)
+            || !string.IsNullOrWhiteSpace(row.Player2Deck)
+            || !string.IsNullOrWhiteSpace(row.Winner)
+            || !string.IsNullOrWhiteSpace(row.StartingPlayer)
+            || row.P1Colors.Count > 0
+            || row.P2Colors.Count > 0;
+    }
 
     private void ExportData()
     {
