@@ -15,6 +15,29 @@
     justify-content: center;
     border-radius: 50%;
     padding: 0;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    box-sizing: border-box;
+}
+
+::deep .mud-chip.mud-chip-size-small {
+    padding: 0;
+}
+
+.color-chip :deep(.mud-chip-content) {
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Remove the ripple/hover background */
+.color-chip:hover, .color-chip:focus, .color-chip.mud-chip-clickable:hover {
+    background-color: transparent !important;
+}
+
+.color-chip :deep(.mud-ripple) {
+    display: none !important;
 }
 
 .line-number {
@@ -39,7 +62,7 @@
 }
 
 .winner-crown-btn.not-selected {
-    opacity: 0.3;
+    opacity: 0.15;
     color: gray;
 }
 
@@ -64,7 +87,7 @@
 }
 
 .start-player-btn.not-selected {
-    opacity: 0.3;
+    opacity: 0.15;
     color: gray;
 }
 
