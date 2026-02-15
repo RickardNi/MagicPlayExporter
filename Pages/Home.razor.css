@@ -27,6 +27,53 @@
     flex-shrink: 0;
 }
 
+.winner-crown-btn {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.winner-crown-btn.not-selected {
+    opacity: 0.3;
+    color: gray;
+}
+
+.winner-crown-btn.selected {
+    background-color: #2E7D32;
+    color: white;
+    opacity: 1;
+}
+
+.start-player-btn {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: bold;
+    font-size: 1rem;
+    user-select: none;
+}
+
+.start-player-btn.not-selected {
+    opacity: 0.3;
+    color: gray;
+}
+
+.start-player-btn.selected {
+    background-color: #594AE2;
+    color: white;
+    opacity: 1;
+}
+
 .start-col {
     width: 2.625rem;
     flex-shrink: 0;
