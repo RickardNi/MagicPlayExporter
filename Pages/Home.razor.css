@@ -103,12 +103,13 @@
 }
 
 .name-col {
-    width: 15rem;
+    min-width: 15rem;
+    flex-grow: 1;
     flex-shrink: 0;
 }
 
 .colors-col {
-    width: 12.5rem;
+    width: 11rem;
     flex-shrink: 0;
 }
 

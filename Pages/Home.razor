@@ -112,6 +112,7 @@
             </div>
             @RenderPlayerHeader()
             @RenderPlayerHeader()
+            <div class="delete-col"></div>
         </MudItem>
     </MudGrid>
 
@@ -180,7 +181,6 @@
                 @(selectedFormat == "BattleDecks" ? "Deck" : "Colors")
             </MudText>
         </div>
-        <div class="delete-col"></div>
     };
 
     private RenderFragment RenderPlayerEntry(GameplayRow row, string playerKey) => __builder =>
