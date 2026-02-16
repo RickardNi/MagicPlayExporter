@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@using MagicPlayExporter.Components
+@using MagicPlayExporter.Services
+@inject IDialogService DialogService
 
 <MudLayout>
 <MudAppBar Elevation="1" Style="background-color: #1c8e55;">
@@ -6,6 +9,11 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers-icon lucide-layers"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
         </MudIconButton>
         <MudText Typo="Typo.h6">Magic Play Exporter</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Upload" 
+                       Color="Color.Inherit" 
+                       OnClick="OpenBgStatsImportDialog"
+                       Title="Import BGStats Data" />
     </MudAppBar>
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
@@ -13,3 +21,18 @@
         </MudContainer>
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private Task OpenBgStatsImportDialog()
+    {
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseOnEscapeKey = true,
+            CloseButton = true,
+        };
+
+        return DialogService.ShowAsync<BgStatsImportDialog>("Import BGStats Data", options);
+    }
+}

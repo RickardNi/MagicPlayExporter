@@ -1,0 +1,206 @@
+@namespace MagicPlayExporter.Components
+@using MagicPlayExporter.Services
+@using MagicPlayExporter.Models.Import
+@using MudBlazor
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject BgStatsImportService ImportService
+@inject ISettingsStorage SettingsStorage
+
+<style>
+    .file-upload-input {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 10;
+        opacity: 0;
+    }
+</style>
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1" Class="mb-4">
+            Upload your BGStats export JSON file here.
+        </MudText>
+
+        <MudStack Style="width: 100%">
+            <MudFileUpload T="IBrowserFile"
+                           @ref="_fileUpload"
+                           OnFilesChanged="OnInputFileChanged"
+                           Accept=".json"
+                           Hidden="false"
+                           InputClass="file-upload-input"
+                           Disabled="@isProcessing"
+                           tabindex="-1"
+                           @ondrop="@ClearDragClass"
+                           @ondragenter="@SetDragClass"
+                           @ondragleave="@ClearDragClass"
+                           @ondragend="@ClearDragClass">
+                <ActivatorContent>
+                    <MudPaper Height="200px"
+                              Outlined="true"
+                              Class="@_dragClass">
+                        <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Style="height: 100%">
+                            <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" />
+                            <MudText Typo="Typo.h6">
+                                Drag and drop JSON file here or click
+                            </MudText>
+                            @if (!string.IsNullOrEmpty(selectedFileName))
+                            {
+                                <MudChip T="string"
+                                         Color="Color.Primary"
+                                         Icon="@Icons.Material.Filled.Description"
+                                         Text="@selectedFileName"
+                                         tabindex="-1" />
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </ActivatorContent>
+            </MudFileUpload>
+            <MudToolBar Gutters="false" Class="relative d-flex justify-end gap-4">
+                <MudButton Color="Color.Primary"
+                           OnClick="@OpenFilePickerAsync"
+                           Disabled="@isProcessing"
+                           Variant="Variant.Filled">
+                    Open file picker
+                </MudButton>
+            </MudToolBar>
+        </MudStack>
+
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <MudAlert Severity="@statusSeverity" Class="mt-2">@statusMessage</MudAlert>
+        }
+
+        @if (importResult?.IsSuccess == true)
+        {
+            <MudPaper Class="pa-4 mt-4" Outlined="true">
+                <MudText Typo="Typo.h6" Class="mb-3">Import Summary</MudText>
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.body2"><strong>Location:</strong> @importResult.Location?.Name</MudText>
+                        <MudText Typo="Typo.body2"><strong>Total Plays:</strong> @importResult.TotalPlaysCount</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-2 mb-2"><strong>Active Players (@importResult.ActivePlayers.Count):</strong></MudText>
+
+                        @foreach (var playerWithCount in importResult.ActivePlayers.Take(10))
+                        {
+                            <div class="d-flex align-center mb-1">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-2" />
+                                <MudText Typo="Typo.body2">@playerWithCount.Player.Name (@playerWithCount.PlayCount plays)</MudText>
+                            </div>
+                        }
+                        @if (importResult.ActivePlayers.Count > 10)
+                        {
+                            <MudText Typo="Typo.body2" Class="mt-1">... and @(importResult.ActivePlayers.Count - 10) more</MudText>
+                        }
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Success"
+                   Variant="Variant.Filled" 
+                   OnClick="ConfirmImport"
+                   Disabled="@(importResult?.IsSuccess != true || isProcessing)">
+            @if (isProcessing)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                <span class="ml-2">Processing...</span>
+            }
+            else
+            {
+                <span>Confirm Import</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mud-width-full mud-height-full d-flex align-center justify-center";
+    private string _dragClass = DefaultDragClass;
+    private MudFileUpload<IBrowserFile>? _fileUpload;
+    private string selectedFileName = string.Empty;
+    private string statusMessage = string.Empty;
+    private Severity statusSeverity = Severity.Info;
+    private bool isProcessing = false;
+    private BgStatsImportResult? importResult = null;
+
+    private Task OpenFilePickerAsync()
+        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
+
+    private async Task OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        var file = e.File;
+        if (file == null)
+            return;
+
+        selectedFileName = file.Name;
+        isProcessing = true;
+        statusMessage = string.Empty;
+        importResult = null;
+        StateHasChanged();
+
+        try
+        {
+            const long maxFileSize = 50 * 1024 * 1024; // 50 MB
+
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var reader = new StreamReader(stream);
+            var jsonContent = await reader.ReadToEndAsync();
+
+            importResult = await ImportService.ImportFromJsonAsync(jsonContent);
+
+            if (importResult.IsSuccess)
+            {
+                statusMessage = $"Import successful! Found {importResult.ActivePlayers.Count} active players with {importResult.TotalPlaysCount} total plays.";
+                statusSeverity = Severity.Success;
+            }
+            else
+            {
+                statusMessage = importResult.ErrorMessage ?? "Import failed.";
+                statusSeverity = Severity.Error;
+                importResult = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error reading file: {ex.Message}";
+            statusSeverity = Severity.Error;
+            importResult = null;
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass()
+        => _dragClass = DefaultDragClass;
+
+    private async Task ConfirmImport()
+    {
+        if (importResult?.IsSuccess == true)
+        {
+            var playerList = importResult.ActivePlayers.Select(pwc =>
+            {
+                pwc.Player.NumberOfPlays = pwc.PlayCount;
+                return pwc.Player;
+            }).ToList();
+            await SettingsStorage.SaveSettingAsync(LocalStorageSettings.Players, playerList);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
