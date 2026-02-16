@@ -198,6 +198,12 @@
                 return pwc.Player;
             }).ToList();
             await SettingsStorage.SaveSettingAsync(LocalStorageSettings.Players, playerList);
+
+            if (importResult.GameMetaData != null)
+            {
+                await SettingsStorage.SaveSettingAsync(LocalStorageSettings.GameMetaData, importResult.GameMetaData);
+            }
+
             MudDialog.Close(DialogResult.Ok(true));
         }
     }

@@ -7,6 +7,7 @@ public class LocalStorageSettings(ILocalStorageService localStorageService) : IS
     private readonly ILocalStorageService _localStorageService = localStorageService;
 
     public const string Players = "Players";
+    public const string GameMetaData = "GameMetaData";
 
     public async Task<T?> GetSettingAsync<T>(string key)
     {

@@ -22,19 +22,19 @@
 
         <MudItem xs="12" sm="3">
             <MudSelect T="string" Label="Set" @bind-Value="selectedSet" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(selectedFormat != "Draft")">
-                <MudSelectItem Value="@("Magic Foundations")">Magic Foundations</MudSelectItem>
+                @foreach (var set in availableSets)
+                {
+                    <MudSelectItem Value="@set">@set</MudSelectItem>
+                }
             </MudSelect>
         </MudItem>
 
         <MudItem xs="12" sm="5">
             <MudSelect T="string" Label="Draft Type" @bind-Value="selectedDraftType" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(selectedFormat != "Draft")">
-                <MudSelectItem Value="@("Draft")">Draft</MudSelectItem>
-                <MudSelectItem Value="@("Pick-Two")">Pick-Two</MudSelectItem>
-                <MudSelectItem Value="@("Grid")">Grid</MudSelectItem>
-                <MudSelectItem Value="@("Winston")">Winston</MudSelectItem>
-                <MudSelectItem Value="@("Winchester")">Winchester</MudSelectItem>
-                <MudSelectItem Value="@("Minneapolis")">Minneapolis</MudSelectItem>
-                <MudSelectItem Value="@("Sealed")">Sealed</MudSelectItem>
+                @foreach (var draftType in availableDraftTypes)
+                {
+                    <MudSelectItem Value="@draftType">@draftType</MudSelectItem>
+                }
             </MudSelect>
         </MudItem>
     </MudGrid>
@@ -194,6 +194,22 @@
 
     private List<GameplayRow> gameplayRows = new();
 
+    private List<string> availableDraftTypes = new List<string>
+    {
+        "Draft",
+        "Pick-Two Draft",
+        "Sealed",
+        "Winston Draft",
+        "Winchester Draft",
+        "Grid Draft",
+        "Minneapolis Draft"
+    };
+
+    private List<string> availableSets = new List<string>
+    {
+        "Magic Foundations Cube"
+    };
+
     private void OnStartTimeBlur(GameplayRow row)
     {
         if (row.StartTime.HasValue && !row.EndTime.HasValue)
@@ -207,6 +223,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadPlayersFromStorageAsync();
+        await LoadGameMetaDataFromStorageAsync();
 
         for (int i = 0; i < 12; ++i)
         {
@@ -220,6 +237,61 @@
         if (savedPlayers != null && savedPlayers.Count > 0)
         {
             playerList = savedPlayers;
+        }
+    }
+
+    private async Task LoadGameMetaDataFromStorageAsync()
+    {
+        var gameMetaData = await SettingsStorage.GetSettingAsync<GameMetaData>(LocalStorageSettings.GameMetaData);
+        if (gameMetaData?.GameAddedBoards != null && gameMetaData.GameAddedBoards.Count > 0)
+        {
+            var predefinedDraftTypes = new List<string>
+            {
+                "Draft",
+                "Pick-Two Draft",
+                "Sealed",
+                "Winston Draft",
+                "Winchester Draft",
+                "Grid Draft",
+                "Minneapolis Draft"
+            };
+
+            var predefinedSets = new List<string>
+            {
+                "Magic Foundations Cube"
+            };
+
+            var importedDraftTypes = gameMetaData.GameAddedBoards
+                .Where(board => predefinedDraftTypes.Contains(board))
+                .ToList();
+
+            var importedSets = gameMetaData.GameAddedBoards
+                .Where(board => predefinedSets.Contains(board))
+                .ToList();
+
+            if (importedDraftTypes.Count > 0)
+            {
+                availableDraftTypes = predefinedDraftTypes
+                    .Where(type => importedDraftTypes.Contains(type))
+                    .ToList();
+
+                if (availableDraftTypes.Count > 0)
+                {
+                    selectedDraftType = availableDraftTypes[0];
+                }
+            }
+
+            if (importedSets.Count > 0)
+            {
+                availableSets = predefinedSets
+                    .Where(set => importedSets.Contains(set))
+                    .ToList();
+
+                if (availableSets.Count > 0)
+                {
+                    selectedSet = availableSets[0];
+                }
+            }
         }
     }
 
