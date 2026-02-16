@@ -2,8 +2,11 @@
 @using MagicPlayExporter.Models
 @using MagicPlayExporter.Models.Import
 @using MagicPlayExporter.Components
+@using MagicPlayExporter.Services
 @inject ISettingsStorage SettingsStorage
 @inject IDialogService DialogService
+@inject DataImportNotificationService NotificationService
+@implements IDisposable
 
 <PageTitle>Magic Play Exporter</PageTitle>
 
@@ -222,6 +225,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        NotificationService.DataImported += OnDataImported;
+
         await LoadPlayersFromStorageAsync();
         await LoadGameMetaDataFromStorageAsync();
 
@@ -229,6 +234,18 @@
         {
             AddRow();
         }
+    }
+
+    private async void OnDataImported(object? sender, EventArgs e)
+    {
+        await LoadPlayersFromStorageAsync();
+        await LoadGameMetaDataFromStorageAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        NotificationService.DataImported -= OnDataImported;
     }
 
     private async Task LoadPlayersFromStorageAsync()

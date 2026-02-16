@@ -23,7 +23,7 @@
 </MudLayout>
 
 @code {
-    private Task OpenBgStatsImportDialog()
+    private async Task OpenBgStatsImportDialog()
     {
         var options = new DialogOptions 
         { 
@@ -33,6 +33,15 @@
             CloseButton = true,
         };
 
-        return DialogService.ShowAsync<BgStatsImportDialog>("Import BGStats Data", options);
+        var dialog = await DialogService.ShowAsync<BgStatsImportDialog>("Import BGStats Data", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            // Trigger a page refresh by navigating to the same page
+            // This will cause Home.razor to reload and fetch fresh data
+            await Task.Delay(100); // Small delay to ensure storage is updated
+            StateHasChanged();
+        }
     }
 }

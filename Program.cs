@@ -13,6 +13,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<ISettingsStorage, LocalStorageSettings>();
 builder.Services.AddScoped<BgStatsImportService>();
+builder.Services.AddScoped<DataImportNotificationService>();
 builder.Services.AddMudServices();
 
 await builder.Build().RunAsync();

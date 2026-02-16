@@ -6,6 +6,7 @@
 
 @inject BgStatsImportService ImportService
 @inject ISettingsStorage SettingsStorage
+@inject DataImportNotificationService NotificationService
 
 <style>
     .file-upload-input {
@@ -204,6 +205,7 @@
                 await SettingsStorage.SaveSettingAsync(LocalStorageSettings.GameMetaData, importResult.GameMetaData);
             }
 
+            NotificationService.NotifyDataImported();
             MudDialog.Close(DialogResult.Ok(true));
         }
     }
