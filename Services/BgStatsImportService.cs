@@ -85,8 +85,11 @@ public class BgStatsImportService
                 }
             }
 
+            // Filter out archived players (tagRefId = 3 indicates "Archived" tag)
             var activePlayers = export.Players
-                .Where(p => playerPlayCounts.ContainsKey(p.Id) && playerPlayCounts[p.Id] >= MinimumNumberOfPlays)
+                .Where(p => playerPlayCounts.ContainsKey(p.Id) && 
+                           playerPlayCounts[p.Id] >= MinimumNumberOfPlays &&
+                           (p.Tags == null || !p.Tags.Any(t => t.TagRefId == 3)))
                 .Select(p => new PlayerWithPlayCount
                 {
                     Player = p,
