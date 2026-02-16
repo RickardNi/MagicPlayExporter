@@ -106,6 +106,9 @@
     [Parameter, EditorRequired]
     public Func<string, CancellationToken, Task<IEnumerable<string>>> SearchDecks { get; set; } = null!;
 
+    [Parameter]
+    public string? OtherPlayerName { get; set; }
+
     private static readonly string[] ColorKeys = { "W", "U", "B", "R", "G" };
 
     private string GetChipStyle(bool isSelected, bool isEnabled)

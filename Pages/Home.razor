@@ -136,6 +136,7 @@
                                    InputType="InputType.Time"
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense"
+                                   @onfocus="@(() => OnStartTimeFocus(row, rowIndex))"
                                    @onblur="@(async () => { OnStartTimeBlur(row); MarkFormDirty(); await SaveFormDataToStorageAsync(); })" />
                 </div>
 
@@ -164,8 +165,9 @@
                              OnPlayerNameChanged="@(async v => { OnPlayerNameChanged(row, true, v); MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
                              OnDeckChanged="@(async v => { row.Player1Deck = ToFullDeckName(v); MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
                              OnColorClick="@(EventCallback.Factory.Create<string>(this, color => ToggleColorForPlayer(row.Player1, color)))"
-                             SearchPlayers="@SearchPlayers"
-                             SearchDecks="@SearchDecks" />
+                             SearchPlayers="@((value, token) => SearchPlayersForRow(value, token, row.Player2))"
+                             SearchDecks="@SearchDecks"
+                             OtherPlayerName="@row.Player2" />
 
                 <PlayerEntry PlayerName="@row.Player2"
                              Label="Player 2"
@@ -179,8 +181,9 @@
                              OnPlayerNameChanged="@(async v => { OnPlayerNameChanged(row, false, v); MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
                              OnDeckChanged="@(async v => { row.Player2Deck = v; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
                              OnColorClick="@(EventCallback.Factory.Create<string>(this, color => ToggleColorForPlayer(row.Player2, color)))"
-                             SearchPlayers="@SearchPlayers"
-                             SearchDecks="@SearchDecks" />
+                             SearchPlayers="@((value, token) => SearchPlayersForRow(value, token, row.Player1))"
+                             SearchDecks="@SearchDecks"
+                             OtherPlayerName="@row.Player1" />
 
                 <div class="delete-col px-1">
                     <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" 
@@ -260,6 +263,23 @@
         // If not found, check if it's already a display name
         deck = availableDecks.FirstOrDefault(d => d.DisplayName == fullOrDisplayName);
         return deck?.DisplayName ?? fullOrDisplayName;
+    }
+
+    private void OnStartTimeFocus(GameplayRow currentRow, int currentIndex)
+    {
+        if (currentRow.StartTime.HasValue)
+        {
+            return;
+        }
+
+        for (int i = currentIndex - 1; i >= 0; i--)
+        {
+            if (gameplayRows[i].StartTime.HasValue)
+            {
+                currentRow.StartTime = gameplayRows[i].StartTime;
+                break;
+            }
+        }
     }
 
     private void OnStartTimeBlur(GameplayRow row)
@@ -757,6 +777,42 @@
         await Task.Delay(5, token);
         var playerNames = playerList.Select(p => p.Name).ToList();
         return string.IsNullOrEmpty(value) ? playerNames : playerNames.Where(p => p.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task<IEnumerable<string>> SearchPlayersForRow(string value, CancellationToken token, string otherPlayerName)
+    {
+        await Task.Delay(5, token);
+
+        var usedPlayerNames = gameplayRows
+            .SelectMany(r => new[] { r.Player1, r.Player2 })
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var allPlayerNames = playerList.Select(p => p.Name).ToList();
+
+        var usedPlayers = allPlayerNames
+            .Where(name => usedPlayerNames.Contains(name))
+            .OrderBy(name => name)
+            .ToList();
+
+        var unusedPlayers = allPlayerNames
+            .Where(name => !usedPlayerNames.Contains(name))
+            .OrderBy(name => name)
+            .ToList();
+
+        var orderedPlayerNames = usedPlayers.Concat(unusedPlayers).ToList();
+
+        var filteredPlayers = orderedPlayerNames
+            .Where(name => !name.Equals(otherPlayerName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return filteredPlayers;
+        }
+
+        return filteredPlayers.Where(p => p.Contains(value, StringComparison.OrdinalIgnoreCase));
     }
 
     private async Task<IEnumerable<string>> SearchDecks(string value, CancellationToken token)
