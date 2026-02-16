@@ -204,6 +204,16 @@
                 await SettingsStorage.SaveSettingAsync(LocalStorageSettings.GameMetaData, importResult.GameMetaData);
             }
 
+            if (importResult.Game != null)
+            {
+                await SettingsStorage.SaveSettingAsync(LocalStorageSettings.Game, importResult.Game);
+            }
+
+            if (importResult.Location != null)
+            {
+                await SettingsStorage.SaveSettingAsync(LocalStorageSettings.Location, importResult.Location);
+            }
+
             NotificationService.NotifyDataImported();
             MudDialog.Close(DialogResult.Ok(true));
         }

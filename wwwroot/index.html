@@ -35,6 +35,25 @@
 
     <!-- Important: Increment the version parameter whenever you update MudBlazor to prevent caching issues -->
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
+
+    <script>
+        window.downloadFile = function(filename, base64Content) {
+            const bytes = atob(base64Content);
+            const buffer = new Uint8Array(bytes.length);
+            for (let i = 0; i < bytes.length; i++) {
+                buffer[i] = bytes.charCodeAt(i);
+            }
+            const blob = new Blob([buffer], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+    </script>
 </body>
 
 </html>

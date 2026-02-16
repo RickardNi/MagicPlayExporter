@@ -1,9 +1,24 @@
 namespace MagicPlayExporter.Models;
 
+using MagicPlayExporter.Models.Import;
+
 public class GameplayRow
 {
-    public string Player1 { get; set; } = string.Empty;
-    public string Player2 { get; set; } = string.Empty;
+    public Player? Player1Object { get; set; }
+    public Player? Player2Object { get; set; }
+
+    public string Player1 
+    { 
+        get => Player1Object?.Name ?? string.Empty;
+        set { } // Keep setter for compatibility but don't use it
+    }
+
+    public string Player2 
+    { 
+        get => Player2Object?.Name ?? string.Empty;
+        set { } // Keep setter for compatibility but don't use it
+    }
+
     public string StartingPlayer { get; set; } = string.Empty;
     public TimeSpan? StartTime { get; set; }
     public TimeSpan? EndTime { get; set; }

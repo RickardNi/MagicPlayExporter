@@ -3,9 +3,11 @@
 @using MagicPlayExporter.Models.Import
 @using MagicPlayExporter.Components
 @using MagicPlayExporter.Services
+@using Microsoft.JSInterop
 @inject ISettingsStorage SettingsStorage
 @inject IDialogService DialogService
 @inject DataImportNotificationService NotificationService
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 
 <PageTitle>Magic Play Exporter</PageTitle>
@@ -444,7 +446,59 @@
             }
         }
 
-        // TODO: Implement export logic
+        // Load game and location from storage
+        var game = await SettingsStorage.GetSettingAsync<Game>(LocalStorageSettings.Game);
+        var location = await SettingsStorage.GetSettingAsync<Location>(LocalStorageSettings.Location);
+
+        if (game == null || location == null)
+        {
+            var parameters = new DialogParameters
+            {
+                ["HeaderMessage"] = "Missing required data:",
+                ["Messages"] = new List<string> { "Please import a Board Game Stats file first to set up the game and location." },
+                ["FooterMessage"] = "",
+                ["ShowProceedButton"] = false,
+                ["CloseText"] = "OK"
+            };
+
+            await DialogService.ShowAsync<ValidationDialog>("Cannot Export", parameters);
+            return;
+        }
+
+        if (!playDate.HasValue)
+        {
+            var parameters = new DialogParameters
+            {
+                ["HeaderMessage"] = "Missing play date:",
+                ["Messages"] = new List<string> { "Please select a date for the plays." },
+                ["FooterMessage"] = "",
+                ["ShowProceedButton"] = false,
+                ["CloseText"] = "OK"
+            };
+
+            await DialogService.ShowAsync<ValidationDialog>("Cannot Export", parameters);
+            return;
+        }
+
+        // Create the export
+        var export = BgStatsExportService.CreateExport(
+            playDate.Value,
+            gameplayRows,
+            game,
+            location,
+            playerList,
+            selectedFormat,
+            selectedSet,
+            selectedDraftType);
+
+        // Serialize to JSON
+        var jsonContent = BgStatsExportService.SerializeToJson(export);
+
+        // Create filename with selected date
+        var filename = $"{playDate.Value:yyyy-MM-dd}.bgsplay";
+
+        // Trigger download
+        await DownloadFileAsync(filename, jsonContent);
     }
 
     private ValidationResult ValidateDataForExport()
@@ -531,13 +585,15 @@
 
     private void OnPlayerNameChanged(GameplayRow row, bool isP1, string newPlayerName)
     {
+        var player = playerList.FirstOrDefault(p => p.Name == newPlayerName);
+
         if (isP1)
         {
-            row.Player1 = newPlayerName;
+            row.Player1Object = player;
         }
         else
         {
-            row.Player2 = newPlayerName;
+            row.Player2Object = player;
         }
 
         if (selectedFormat == "Draft" && !string.IsNullOrWhiteSpace(newPlayerName))
@@ -678,5 +734,13 @@
             isFormDirty = false;
             StateHasChanged();
         }
+    }
+
+    private async Task DownloadFileAsync(string filename, string content)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+        var base64 = Convert.ToBase64String(bytes);
+
+        await JSRuntime.InvokeVoidAsync("downloadFile", filename, base64);
     }
 }
