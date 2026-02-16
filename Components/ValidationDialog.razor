@@ -1,0 +1,53 @@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1" Class="mb-4">@HeaderMessage</MudText>
+        @foreach (var message in Messages)
+        {
+            <MudText Typo="Typo.body2" Class="mb-2">• @message</MudText>
+        }
+        <MudText Typo="Typo.body1" Class="mt-4">@FooterMessage</MudText>
+    </DialogContent>
+    <DialogActions>
+        @if (ShowProceedButton)
+        {
+            <MudButton OnClick="Cancel" Variant="Variant.Text">@CancelText</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Proceed">@ProceedText</MudButton>
+        }
+        else
+        {
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Close">@CloseText</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public string HeaderMessage { get; set; } = string.Empty;
+
+    [Parameter]
+    public List<string> Messages { get; set; } = new();
+
+    [Parameter]
+    public string FooterMessage { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowProceedButton { get; set; } = false;
+
+    [Parameter]
+    public string ProceedText { get; set; } = "Proceed";
+
+    [Parameter]
+    public string CancelText { get; set; } = "Cancel";
+
+    [Parameter]
+    public string CloseText { get; set; } = "OK";
+
+    private void Proceed() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Cancel();
+    private void Close() => MudDialog.Close(DialogResult.Ok(true));
+}

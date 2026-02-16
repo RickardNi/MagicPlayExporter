@@ -396,9 +396,137 @@
             || row.P2Colors.Count > 0;
     }
 
-    private void ExportData()
+    private class ValidationResult
     {
+        public bool HasBlockingErrors { get; init; }
+        public bool HasWarnings { get; init; }
+        public List<string> ErrorMessages { get; init; } = new();
+        public List<string> WarningMessages { get; init; } = new();
+    }
+
+    private async Task ExportData()
+    {
+        var validation = ValidateDataForExport();
+
+        if (validation.HasBlockingErrors)
+        {
+            var parameters = new DialogParameters
+            {
+                ["HeaderMessage"] = "Cannot export data due to the following errors:",
+                ["Messages"] = validation.ErrorMessages,
+                ["FooterMessage"] = "Please fix these issues before exporting.",
+                ["ShowProceedButton"] = false,
+                ["CloseText"] = "OK"
+            };
+
+            await DialogService.ShowAsync<ValidationDialog>("Cannot Export", parameters);
+            return;
+        }
+
+        if (validation.HasWarnings)
+        {
+            var parameters = new DialogParameters
+            {
+                ["HeaderMessage"] = "",
+                ["Messages"] = validation.WarningMessages,
+                ["FooterMessage"] = "Do you want to proceed with the export anyway?",
+                ["ShowProceedButton"] = true,
+                ["ProceedText"] = "Proceed Anyway",
+                ["CancelText"] = "Cancel"
+            };
+
+            var dialog = await DialogService.ShowAsync<ValidationDialog>("Export Warning", parameters);
+            var result = await dialog.Result;
+
+            if (result.Canceled)
+            {
+                return;
+            }
+        }
+
         // TODO: Implement export logic
+    }
+
+    private ValidationResult ValidateDataForExport()
+    {
+        var missingPlayerRows = new List<int>();
+        var invalidWinnerRows = new List<int>();
+        var duplicatePlayerRows = new List<int>();
+        var missingStartPlayerRows = new List<int>();
+
+        for (int i = 0; i < gameplayRows.Count; ++i)
+        {
+            var row = gameplayRows[i];
+            var rowNumber = i + 1;
+
+            var hasPlayer1 = !string.IsNullOrWhiteSpace(row.Player1);
+            var hasPlayer2 = !string.IsNullOrWhiteSpace(row.Player2);
+
+            if (!hasPlayer1 || !hasPlayer2)
+            {
+                missingPlayerRows.Add(rowNumber);
+            }
+            else if (row.Player1.Equals(row.Player2, StringComparison.OrdinalIgnoreCase))
+            {
+                duplicatePlayerRows.Add(rowNumber);
+            }
+
+            var hasWinner = !string.IsNullOrWhiteSpace(row.Winner);
+            var validWinner = hasWinner && (row.Winner == "P1" || row.Winner == "P2");
+            if (!validWinner)
+            {
+                invalidWinnerRows.Add(rowNumber);
+            }
+
+            var hasStartPlayer = !string.IsNullOrWhiteSpace(row.StartingPlayer);
+            var validStartPlayer = hasStartPlayer && (row.StartingPlayer == "P1" || row.StartingPlayer == "P2");
+            if (!validStartPlayer)
+            {
+                missingStartPlayerRows.Add(rowNumber);
+            }
+        }
+
+        var result = new ValidationResult();
+        var errorMessages = new List<string>();
+
+        if (missingPlayerRows.Count > 0)
+        {
+            var rowList = string.Join(", ", missingPlayerRows);
+            errorMessages.Add($"Missing player(s) in row(s): {rowList}");
+        }
+
+        if (duplicatePlayerRows.Count > 0)
+        {
+            var rowList = string.Join(", ", duplicatePlayerRows);
+            errorMessages.Add($"Same player listed twice in row(s): {rowList}");
+        }
+
+        if (invalidWinnerRows.Count > 0)
+        {
+            var rowList = string.Join(", ", invalidWinnerRows);
+            errorMessages.Add($"Missing or invalid winner in row(s): {rowList}");
+        }
+
+        if (errorMessages.Count > 0)
+        {
+            return new ValidationResult
+            {
+                HasBlockingErrors = true,
+                ErrorMessages = errorMessages
+            };
+        }
+
+        if (missingStartPlayerRows.Count > 0)
+        {
+            var rowList = string.Join(", ", missingStartPlayerRows);
+            return new ValidationResult
+            {
+                HasWarnings = true,
+                WarningMessages = new List<string> { $"The following row(s) are missing a start player: {rowList}" }
+            };
+        }
+
+        return result;
     }
 
     private void OnPlayerNameChanged(GameplayRow row, bool isP1, string newPlayerName)
