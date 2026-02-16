@@ -5,7 +5,9 @@ namespace MagicPlayExporter.Services;
 
 public class BgStatsImportService
 {
-    public async Task<BgStatsImportResult> ImportFromJsonAsync(string jsonContent)
+    private const int MinimumNumberOfPlays = 5;
+
+    public static async Task<BgStatsImportResult> ImportFromJsonAsync(string jsonContent)
     {
         try
         {
@@ -66,7 +68,7 @@ public class BgStatsImportService
             }
 
             var activePlayers = export.Players
-                .Where(p => playerPlayCounts.ContainsKey(p.Id) && playerPlayCounts[p.Id] > 0)
+                .Where(p => playerPlayCounts.ContainsKey(p.Id) && playerPlayCounts[p.Id] >= MinimumNumberOfPlays)
                 .Select(p => new PlayerWithPlayCount
                 {
                     Player = p,
