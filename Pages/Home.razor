@@ -15,7 +15,12 @@
 <MudPaper Class="pa-4 mb-4">
     <MudGrid Spacing="4">
         <MudItem xs="12" sm="2">
-            <MudDatePicker Label="Date" @bind-Date="playDate" DateFormat="yyyy-MM-dd" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudDatePicker Label="Date" 
+                          Date="@playDate" 
+                          DateChanged="@(async (DateTime? newDate) => { playDate = newDate; await SaveFormDataToStorageAsync(); })" 
+                          DateFormat="yyyy-MM-dd" 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense" />
         </MudItem>
 
         <MudItem xs="12" sm="2">
@@ -31,7 +36,13 @@
         </MudItem>
 
         <MudItem xs="12" sm="3">
-            <MudSelect T="string" Label="Set" @bind-Value="selectedSet" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(selectedFormat != "Draft")">
+            <MudSelect T="string" 
+                      Label="Set" 
+                      Value="@selectedSet" 
+                      ValueChanged="@(async (string newSet) => { selectedSet = newSet; await SaveFormDataToStorageAsync(); })" 
+                      Variant="Variant.Outlined" 
+                      Margin="Margin.Dense" 
+                      Disabled="@(selectedFormat != "Draft")">
                 @foreach (var set in availableSets)
                 {
                     <MudSelectItem Value="@set">@set</MudSelectItem>
@@ -40,7 +51,13 @@
         </MudItem>
 
         <MudItem xs="12" sm="5">
-            <MudSelect T="string" Label="Draft Type" @bind-Value="selectedDraftType" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(selectedFormat != "Draft")">
+            <MudSelect T="string" 
+                      Label="Draft Type" 
+                      Value="@selectedDraftType" 
+                      ValueChanged="@(async (string newDraftType) => { selectedDraftType = newDraftType; await SaveFormDataToStorageAsync(); })" 
+                      Variant="Variant.Outlined" 
+                      Margin="Margin.Dense" 
+                      Disabled="@(selectedFormat != "Draft")">
                 @foreach (var draftType in availableDraftTypes)
                 {
                     <MudSelectItem Value="@draftType">@draftType</MudSelectItem>
@@ -61,7 +78,7 @@
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="AddRow">
+                   OnClick="AddRowAsync">
             Add
         </MudButton>
         <MudButton Variant="Variant.Filled"
@@ -119,7 +136,7 @@
                                    InputType="InputType.Time"
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense"
-                                   @onblur="@(() => { OnStartTimeBlur(row); MarkFormDirty(); })" />
+                                   @onblur="@(async () => { OnStartTimeBlur(row); MarkFormDirty(); await SaveFormDataToStorageAsync(); })" />
                 </div>
 
                 <div class="time-col px-1">
@@ -128,7 +145,7 @@
                                    InputType="InputType.Time"
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense"
-                                   @onblur="@(() => MarkFormDirty())" />
+                                   @onblur="@(async () => { MarkFormDirty(); await SaveFormDataToStorageAsync(); })" />
                 </div>
 
                 <div class="duration-col px-1">
@@ -142,10 +159,10 @@
                              IsWinner="@(row.Winner == "P1")"
                              IsStartingPlayer="@(row.StartingPlayer == "P1")"
                              Format="@selectedFormat"
-                             OnWinnerClick="@(() => { row.Winner = "P1"; MarkFormDirty(); })"
-                             OnStartingPlayerClick="@(() => { row.StartingPlayer = "P1"; MarkFormDirty(); })"
-                             OnPlayerNameChanged="@(v => { OnPlayerNameChanged(row, true, v); MarkFormDirty(); })"
-                             OnDeckChanged="@(v => { row.Player1Deck = ToFullDeckName(v); MarkFormDirty(); })"
+                             OnWinnerClick="@(async () => { row.Winner = "P1"; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
+                             OnStartingPlayerClick="@(async () => { row.StartingPlayer = "P1"; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
+                             OnPlayerNameChanged="@(async v => { OnPlayerNameChanged(row, true, v); MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
+                             OnDeckChanged="@(async v => { row.Player1Deck = ToFullDeckName(v); MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
                              OnColorClick="@(EventCallback.Factory.Create<string>(this, color => ToggleColorForPlayer(row.Player1, color)))"
                              SearchPlayers="@SearchPlayers"
                              SearchDecks="@SearchDecks" />
@@ -157,10 +174,10 @@
                              IsWinner="@(row.Winner == "P2")"
                              IsStartingPlayer="@(row.StartingPlayer == "P2")"
                              Format="@selectedFormat"
-                             OnWinnerClick="@(() => { row.Winner = "P2"; MarkFormDirty(); })"
-                             OnStartingPlayerClick="@(() => { row.StartingPlayer = "P2"; MarkFormDirty(); })"
-                             OnPlayerNameChanged="@(v => { OnPlayerNameChanged(row, false, v); MarkFormDirty(); })"
-                             OnDeckChanged="@(v => { row.Player2Deck = v; MarkFormDirty(); })"
+                             OnWinnerClick="@(async () => { row.Winner = "P2"; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
+                             OnStartingPlayerClick="@(async () => { row.StartingPlayer = "P2"; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
+                             OnPlayerNameChanged="@(async v => { OnPlayerNameChanged(row, false, v); MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
+                             OnDeckChanged="@(async v => { row.Player2Deck = v; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
                              OnColorClick="@(EventCallback.Factory.Create<string>(this, color => ToggleColorForPlayer(row.Player2, color)))"
                              SearchPlayers="@SearchPlayers"
                              SearchDecks="@SearchDecks" />
@@ -261,11 +278,7 @@
 
         await LoadPlayersFromStorageAsync();
         await LoadGameMetaDataFromStorageAsync();
-
-        for (int i = 0; i < 12; ++i)
-        {
-            AddRow();
-        }
+        await LoadFormDataFromStorageAsync();
     }
 
     private async void OnDataImported(object? sender, EventArgs e)
@@ -362,7 +375,83 @@
         }
     }
 
-    private void AddRow() => gameplayRows.Add(new GameplayRow());
+    private async Task LoadFormDataFromStorageAsync()
+    {
+        var savedFormData = await SettingsStorage.GetSettingAsync<FormData>(LocalStorageSettings.FormData);
+
+        if (savedFormData != null)
+        {
+            playDate = savedFormData.PlayDate;
+            selectedFormat = savedFormData.SelectedFormat;
+            selectedSet = savedFormData.SelectedSet;
+            selectedDraftType = savedFormData.SelectedDraftType;
+            playerColorsMap = savedFormData.PlayerColorsMap ?? new();
+
+            gameplayRows.Clear();
+            foreach (var rowData in savedFormData.GameplayRows)
+            {
+                var row = new GameplayRow
+                {
+                    Player1Object = rowData.Player1Id.HasValue 
+                        ? playerList.FirstOrDefault(p => p.Id == rowData.Player1Id.Value) 
+                        : null,
+                    Player2Object = rowData.Player2Id.HasValue 
+                        ? playerList.FirstOrDefault(p => p.Id == rowData.Player2Id.Value) 
+                        : null,
+                    StartingPlayer = rowData.StartingPlayer,
+                    StartTime = rowData.StartTime,
+                    EndTime = rowData.EndTime,
+                    Player1Deck = rowData.Player1Deck,
+                    Player2Deck = rowData.Player2Deck,
+                    Winner = rowData.Winner,
+                    P1Colors = rowData.P1Colors,
+                    P2Colors = rowData.P2Colors
+                };
+                gameplayRows.Add(row);
+            }
+        }
+
+        if (gameplayRows.Count == 0)
+        {
+            for (int i = 0; i < 12; i++)
+            {
+                gameplayRows.Add(new GameplayRow());
+            }
+        }
+    }
+
+    private async Task SaveFormDataToStorageAsync()
+    {
+        var formData = new FormData
+        {
+            PlayDate = playDate,
+            SelectedFormat = selectedFormat,
+            SelectedSet = selectedSet,
+            SelectedDraftType = selectedDraftType,
+            PlayerColorsMap = playerColorsMap,
+            GameplayRows = gameplayRows.Select(row => new GameplayRowData
+            {
+                Player1Id = row.Player1Object?.Id,
+                Player2Id = row.Player2Object?.Id,
+                StartingPlayer = row.StartingPlayer,
+                StartTime = row.StartTime,
+                EndTime = row.EndTime,
+                Player1Deck = row.Player1Deck,
+                Player2Deck = row.Player2Deck,
+                Winner = row.Winner,
+                P1Colors = row.P1Colors,
+                P2Colors = row.P2Colors
+            }).ToList()
+        };
+
+        await SettingsStorage.SaveSettingAsync(LocalStorageSettings.FormData, formData);
+    }
+
+    private async Task AddRowAsync()
+    {
+        gameplayRows.Add(new GameplayRow());
+        await SaveFormDataToStorageAsync();
+    }
 
     private async Task RemoveRow(GameplayRow row)
     {
@@ -382,6 +471,7 @@
 
         gameplayRows.Remove(row);
         MarkFormDirty();
+        await SaveFormDataToStorageAsync();
     }
 
     private bool HasRowData(GameplayRow row)
@@ -612,7 +702,7 @@
         }
     }
 
-    private void ToggleColorForPlayer(string playerName, string color)
+    private async Task ToggleColorForPlayer(string playerName, string color)
     {
         if (string.IsNullOrWhiteSpace(playerName) || selectedFormat != "Draft")
             return;
@@ -652,6 +742,7 @@
         }
 
         MarkFormDirty();
+        await SaveFormDataToStorageAsync();
         StateHasChanged();
     }
 
@@ -701,12 +792,13 @@
             playerColorsMap.Clear();
             for (int i = 0; i < 12; i++)
             {
-                AddRow();
+                gameplayRows.Add(new GameplayRow());
             }
             isFormDirty = false;
         }
 
         selectedFormat = newFormat;
+        await SaveFormDataToStorageAsync();
         StateHasChanged();
     }
 
@@ -729,9 +821,10 @@
             playerColorsMap.Clear();
             for (int i = 0; i < 12; i++)
             {
-                AddRow();
+                gameplayRows.Add(new GameplayRow());
             }
             isFormDirty = false;
+            await SaveFormDataToStorageAsync();
             StateHasChanged();
         }
     }

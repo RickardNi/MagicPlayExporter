@@ -10,6 +10,7 @@ public class LocalStorageSettings(ILocalStorageService localStorageService) : IS
     public const string GameMetaData = "GameMetaData";
     public const string Game = "Game";
     public const string Location = "Location";
+    public const string FormData = "FormData";
 
     public async Task<T?> GetSettingAsync<T>(string key)
     {
