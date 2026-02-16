@@ -1,0 +1,163 @@
+@namespace MagicPlayExporter.Components
+@using MagicPlayExporter.Models
+@using MagicPlayExporter.Models.Import
+
+@inject ISettingsStorage SettingsStorage
+@inject IDialogService DialogService
+
+<MudExpansionPanel Text="Players">
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudList T="string" Dense="true">
+                @foreach (var player in PlayerList)
+                {
+                    var playCount = GetPlayerPlayCount(player.Name);
+                    <MudListItem Style="cursor: pointer;"
+                                 Class="@(selectedPlayer == player ? "mud-selected-item" : "")"
+                                 OnClick="@(() => SelectPlayer(player))">
+                        <div class="d-flex align-center justify-space-between">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
+                                <MudText>@player.Name (@playCount plays)</MudText>
+                            </div>
+                            <div @onclick:stopPropagation="true">
+                                <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="@(() => RemovePlayer(player))"
+                                               Disabled="@IsPlayerInUse(player.Name)" />
+                            </div>
+                        </div>
+                    </MudListItem>
+                }
+            </MudList>
+        </MudItem>
+        <MudItem xs="12" md="8">
+            @if (selectedPlayer != null)
+            {
+                <MudPaper Class="pa-4" Elevation="2">
+                    <div class="mb-4">
+                        <MudText Typo="Typo.h6">Player Details</MudText>
+                    </div>
+
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">Name</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3">@selectedPlayer.Name</MudText>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">Number of Plays</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3">@selectedPlayer.NumberOfPlays</MudText>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">Player ID</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3">@selectedPlayer.Id</MudText>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">Anonymous</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3">@(selectedPlayer.IsAnonymous ? "Yes" : "No")</MudText>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">UUID</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3" Style="word-break: break-all;">@selectedPlayer.Uuid</MudText>
+                        </MudItem>
+
+                        @if (!string.IsNullOrWhiteSpace(selectedPlayer.ModificationDate))
+                        {
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.subtitle2" Class="mb-1">Last Modified</MudText>
+                                <MudText Typo="Typo.body1" Class="mb-3">@selectedPlayer.ModificationDate</MudText>
+                            </MudItem>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(selectedPlayer.MetaData))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.subtitle2" Class="mb-1">Metadata</MudText>
+                                <MudText Typo="Typo.body1" Class="mb-3">@selectedPlayer.MetaData</MudText>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudPaper>
+            }
+            else
+            {
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.body1" Align="Align.Center" Class="my-8">
+                        Select a player to view details
+                    </MudText>
+                </MudPaper>
+            }
+        </MudItem>
+    </MudGrid>
+</MudExpansionPanel>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<Player> PlayerList { get; set; } = new();
+
+    [Parameter]
+    public List<GameplayRow> GameplayRows { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<Player>> OnPlayersChanged { get; set; }
+
+    private Player? selectedPlayer = null;
+
+    protected override void OnParametersSet()
+    {
+        if (selectedPlayer == null && PlayerList.Count > 0)
+        {
+            selectedPlayer = PlayerList.First();
+        }
+        else if (selectedPlayer != null && !PlayerList.Contains(selectedPlayer))
+        {
+            selectedPlayer = PlayerList.Count > 0 ? PlayerList.First() : null;
+        }
+    }
+
+    private int GetPlayerPlayCount(string playerName)
+    {
+        var player = PlayerList.FirstOrDefault(p => p.Name == playerName);
+        return player?.NumberOfPlays ?? 0;
+    }
+
+    private void SelectPlayer(Player player)
+    {
+        selectedPlayer = player;
+    }
+
+    private bool IsPlayerInUse(string playerName)
+    {
+        return GameplayRows.Any(row => 
+            row.Player1 == playerName || 
+            row.Player2 == playerName);
+    }
+
+    private async Task RemovePlayer(Player player)
+    {
+        if (IsPlayerInUse(player.Name))
+        {
+            await DialogService.ShowMessageBox(
+                "Cannot Delete Player",
+                $"Cannot delete {player.Name} because they are currently in use in the gameplay data.",
+                yesText: "OK");
+            return;
+        }
+
+        PlayerList.Remove(player);
+        await SettingsStorage.SaveSettingAsync(LocalStorageSettings.Players, PlayerList);
+        await OnPlayersChanged.InvokeAsync(PlayerList);
+
+        if (selectedPlayer == player)
+        {
+            selectedPlayer = PlayerList.Count > 0 ? PlayerList.First() : null;
+        }
+
+        StateHasChanged();
+    }
+}

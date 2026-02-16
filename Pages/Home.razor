@@ -41,9 +41,9 @@
 </MudPaper>
 
 <MudExpansionPanels Class="mb-4">
-    <PlayerImportPanel PlayerList="@playerList"
-                       IsFormDirty="@isFormDirty"
-                       OnPlayersChanged="@OnPlayersImported" />
+    <PlayerManagementPanel PlayerList="@playerList"
+                           GameplayRows="@gameplayRows"
+                           OnPlayersChanged="@OnPlayersImported" />
 </MudExpansionPanels>
 
 <MudPaper Class="pa-4 mb-4">
