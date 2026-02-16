@@ -28,7 +28,7 @@
                      SearchFunc="@SearchPlayers" />
 </div>
 
-<div class="@($"colors-col px-1 player-container {(IsWinner ? "player-winner-bg" : "")}")">
+<div class="@($"colors-col px-1 player-container {(Format == "BattleDecks" ? "deck-mode" : "")} {(IsWinner ? "player-winner-bg" : "")}")">
     @if (Format == "Draft")
     {
         var canSelectColors = !string.IsNullOrWhiteSpace(PlayerName);
@@ -58,6 +58,7 @@
                          Label="Deck"
                          Variant="Variant.Outlined"
                          Margin="Margin.Dense"
+                         MaxItems="null"
                          SearchFunc="@SearchDecks" />
     }
 </div>

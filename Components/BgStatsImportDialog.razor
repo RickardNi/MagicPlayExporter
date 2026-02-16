@@ -4,7 +4,6 @@
 @using MudBlazor
 @using Microsoft.AspNetCore.Components.Forms
 
-@inject BgStatsImportService ImportService
 @inject ISettingsStorage SettingsStorage
 @inject DataImportNotificationService NotificationService
 
@@ -156,7 +155,7 @@
             using var reader = new StreamReader(stream);
             var jsonContent = await reader.ReadToEndAsync();
 
-            importResult = await ImportService.ImportFromJsonAsync(jsonContent);
+            importResult = await BgStatsImportService.ImportFromJsonAsync(jsonContent);
 
             if (importResult.IsSuccess)
             {

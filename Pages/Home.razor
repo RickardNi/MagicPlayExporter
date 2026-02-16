@@ -17,7 +17,12 @@
         </MudItem>
 
         <MudItem xs="12" sm="2">
-            <MudSelect T="string" Label="Format" @bind-Value="selectedFormat" Variant="Variant.Outlined" Margin="Margin.Dense">
+            <MudSelect T="string" 
+                       Label="Format" 
+                       Value="@selectedFormat" 
+                       ValueChanged="@OnFormatChanged" 
+                       Variant="Variant.Outlined" 
+                       Margin="Margin.Dense">
                 <MudSelectItem Value="@("Draft")">Draft</MudSelectItem>
                 <MudSelectItem Value="@("BattleDecks")">Battle Decks</MudSelectItem>
             </MudSelect>
@@ -130,7 +135,7 @@
 
                 <PlayerEntry PlayerName="@row.Player1"
                              Label="Player 1"
-                             DeckName="@row.Player1Deck"
+                             DeckName="@ToDisplayDeckName(row.Player1Deck)"
                              Colors="@row.P1Colors"
                              IsWinner="@(row.Winner == "P1")"
                              IsStartingPlayer="@(row.StartingPlayer == "P1")"
@@ -138,7 +143,7 @@
                              OnWinnerClick="@(() => { row.Winner = "P1"; MarkFormDirty(); })"
                              OnStartingPlayerClick="@(() => { row.StartingPlayer = "P1"; MarkFormDirty(); })"
                              OnPlayerNameChanged="@(v => { OnPlayerNameChanged(row, true, v); MarkFormDirty(); })"
-                             OnDeckChanged="@(v => { row.Player1Deck = v; MarkFormDirty(); })"
+                             OnDeckChanged="@(v => { row.Player1Deck = ToFullDeckName(v); MarkFormDirty(); })"
                              OnColorClick="@(EventCallback.Factory.Create<string>(this, color => ToggleColorForPlayer(row.Player1, color)))"
                              SearchPlayers="@SearchPlayers"
                              SearchDecks="@SearchDecks" />
@@ -179,7 +184,7 @@
         <div class="name-col px-1">
             <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Name</MudText>
         </div>
-        <div class="colors-col px-1">
+        <div class="@($"colors-col px-1 {(selectedFormat == "BattleDecks" ? "deck-mode" : "")}")">
             <MudText Typo="Typo.subtitle2" Class="font-weight-bold">
                 @(selectedFormat == "BattleDecks" ? "Deck" : "Colors")
             </MudText>
@@ -212,6 +217,31 @@
     {
         "Magic Foundations Cube"
     };
+
+    private List<DeckInfo> availableDecks = new();
+
+    private string ToFullDeckName(string displayName)
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+            return displayName;
+
+        var deck = availableDecks.FirstOrDefault(d => d.DisplayName == displayName);
+        return deck?.FullName ?? displayName;
+    }
+
+    private string ToDisplayDeckName(string fullOrDisplayName)
+    {
+        if (string.IsNullOrWhiteSpace(fullOrDisplayName))
+            return fullOrDisplayName;
+
+        var deck = availableDecks.FirstOrDefault(d => d.FullName == fullOrDisplayName);
+        if (deck != null)
+            return deck.DisplayName;
+
+        // If not found, check if it's already a display name
+        deck = availableDecks.FirstOrDefault(d => d.DisplayName == fullOrDisplayName);
+        return deck?.DisplayName ?? fullOrDisplayName;
+    }
 
     private void OnStartTimeBlur(GameplayRow row)
     {
@@ -260,6 +290,7 @@
     private async Task LoadGameMetaDataFromStorageAsync()
     {
         var gameMetaData = await SettingsStorage.GetSettingAsync<GameMetaData>(LocalStorageSettings.GameMetaData);
+
         if (gameMetaData?.GameAddedBoards != null && gameMetaData.GameAddedBoards.Count > 0)
         {
             var predefinedDraftTypes = new List<string>
@@ -308,6 +339,23 @@
                 {
                     selectedSet = availableSets[0];
                 }
+            }
+        }
+
+        if (gameMetaData?.GameAddedRoles != null && gameMetaData.GameAddedRoles.Count > 0)
+        {
+            var importedDecks = gameMetaData.GameAddedRoles
+                .Where(role => role.StartsWith("[Battle Deck]"))
+                .Select(role => new DeckInfo
+                {
+                    FullName = role,
+                    DisplayName = role.Substring("[Battle Deck]".Length).Trim()
+                })
+                .ToList();
+
+            if (importedDecks.Count > 0)
+            {
+                availableDecks = importedDecks;
             }
         }
     }
@@ -439,8 +487,43 @@
     private async Task<IEnumerable<string>> SearchDecks(string value, CancellationToken token)
     {
         await Task.Delay(5, token);
-        var decks = new[] { "Adventure Time v1", "Converging Domains v6", "Imperious Elves v4", "Shock Troupes v6" };
-        return string.IsNullOrEmpty(value) ? decks : decks.Where(d => d.Contains(value, StringComparison.OrdinalIgnoreCase));
+        var deckNames = availableDecks
+            .Select(d => d.DisplayName)
+            .OrderBy(d => d)
+            .ToList();
+        return string.IsNullOrEmpty(value) ? deckNames : deckNames.Where(d => d.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task OnFormatChanged(string newFormat)
+    {
+        if (newFormat == selectedFormat)
+            return;
+
+        if (isFormDirty)
+        {
+            bool? result = await DialogService.ShowMessageBox(
+                "Clear Data Required",
+                "You must clear all data before switching formats. Would you like to clear all data now?",
+                yesText: "Clear & Switch",
+                cancelText: "Cancel");
+
+            if (result != true)
+            {
+                StateHasChanged();
+                return;
+            }
+
+            gameplayRows.Clear();
+            playerColorsMap.Clear();
+            for (int i = 0; i < 12; i++)
+            {
+                AddRow();
+            }
+            isFormDirty = false;
+        }
+
+        selectedFormat = newFormat;
+        StateHasChanged();
     }
 
     private void MarkFormDirty()

@@ -94,3 +94,8 @@
     width: 10.25rem;
     flex-shrink: 0;
 }
+
+.colors-col.deck-mode {
+    width: 20.5rem;
+    flex-shrink: 0;
+}

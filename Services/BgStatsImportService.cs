@@ -1,3 +1,4 @@
+using MagicPlayExporter.Models;
 using MagicPlayExporter.Models.Import;
 using System.Text.Json;
 
@@ -50,6 +51,23 @@ public class BgStatsImportService
                 return BgStatsImportResult.Failure("Location with id 16 not found.");
             }
 
+            var decks = new List<DeckInfo>();
+            if (gameMetaData?.GameAddedRoles != null)
+            {
+                foreach (var role in gameMetaData.GameAddedRoles)
+                {
+                    if (role.StartsWith("[Battle Deck]"))
+                    {
+                        var displayName = role.Substring("[Battle Deck]".Length).Trim();
+                        decks.Add(new DeckInfo
+                        {
+                            FullName = role,
+                            DisplayName = displayName
+                        });
+                    }
+                }
+            }
+
             var relevantPlays = export.Plays
                 .Where(p => p.GameRefId == 39)
                 .ToList();
@@ -77,7 +95,7 @@ public class BgStatsImportService
                 .OrderByDescending(p => p.PlayCount)
                 .ToList();
 
-            return BgStatsImportResult.Success(game, gameMetaData, location, activePlayers, relevantPlays.Count);
+            return BgStatsImportResult.Success(game, gameMetaData, location, activePlayers, relevantPlays.Count, decks);
         }
         catch (Exception ex)
         {
@@ -95,9 +113,10 @@ public class BgStatsImportResult
     public Location? Location { get; set; }
     public List<PlayerWithPlayCount> ActivePlayers { get; set; } = new();
     public int TotalPlaysCount { get; set; }
+    public List<DeckInfo> Decks { get; set; } = new();
 
     public static BgStatsImportResult Success(Game game, GameMetaData? gameMetaData, Location location, 
-        List<PlayerWithPlayCount> activePlayers, int totalPlaysCount)
+        List<PlayerWithPlayCount> activePlayers, int totalPlaysCount, List<DeckInfo> decks)
     {
         return new BgStatsImportResult
         {
@@ -106,7 +125,8 @@ public class BgStatsImportResult
             GameMetaData = gameMetaData,
             Location = location,
             ActivePlayers = activePlayers,
-            TotalPlaysCount = totalPlaysCount
+            TotalPlaysCount = totalPlaysCount,
+            Decks = decks
         };
     }
 
