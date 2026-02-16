@@ -10,7 +10,7 @@ public class Play
     public bool Ignored { get; set; } = false;
     public int LocationRefId { get; set; }
     public bool ManualWinner { get; set; } = true;
-    public string MetaData { get; set; } = string.Empty;
+    public string MetaData { get; set; } = "{\"playerRefId\":2,\"playGameBggVersion\":\"{\\\"versionId\\\":0,\\\"gameName\\\":\\\"\\\",\\\"versionName\\\":\\\"\\\",\\\"imageUrl\\\":\\\"https:\\\\\\/\\\\\\/cf.geekdo-images.com\\\\\\/CxJmNl4wR4InjqyNrMdBTw__thumb\\\\\\/img\\\\\\/TtlQgYxLTPyYQWJvruMHfwKPReE=\\\\\\/fit-in\\\\\\/200x150\\\\\\/filters:strip_icc()\\\\\\/pic163749.jpg\\\",\\\"thumbUrl\\\":\\\"https:\\\\\\/\\\\\\/cf.geekdo-images.com\\\\\\/CxJmNl4wR4InjqyNrMdBTw__thumb\\\\\\/img\\\\\\/TtlQgYxLTPyYQWJvruMHfwKPReE=\\\\\\/fit-in\\\\\\/200x150\\\\\\/filters:strip_icc()\\\\\\/pic163749.jpg\\\",\\\"yearPublished\\\":0}\",\"playUsedGameCopy\":2}";
     public string ModificationDate { get; set; } = string.Empty;
     public string PlayDate { get; set; } = string.Empty;
     public List<PlayerScore> PlayerScores { get; set; } = new();

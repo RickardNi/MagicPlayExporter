@@ -92,7 +92,6 @@ public class BgStatsExportService
                 Ignored = false,
                 LocationRefId = location.Id,
                 ManualWinner = true,
-                MetaData = string.Empty,
                 ModificationDate = entryDateString,
                 PlayDate = entryDateString,
                 PlayerScores = new List<ExportModels.PlayerScore>(),
