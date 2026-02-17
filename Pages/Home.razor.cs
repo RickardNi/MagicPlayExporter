@@ -21,7 +21,6 @@ public partial class Home : IDisposable
     private string selectedDraftType = "Draft";
 
     private List<Player> playerList = new();
-    private bool isFormDirty = false;
     private Dictionary<string, HashSet<string>> playerColorsMap = new();
 
     private List<GameplayRow> gameplayRows = new();
