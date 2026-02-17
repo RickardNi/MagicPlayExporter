@@ -10,6 +10,8 @@ This is a **data entry and file generation tool** for BG Stats. I track my Magic
 
 The tool handles the BG Stats JSON format, validates the data, and ensures all player IDs, game references, and metadata are correctly structured for a seamless import.
 
+More information about importing files into BG Stats can be found [here](https://www.bgstatsapp.com/explanations/importing-own-files-into-board-game-stats/).
+
 ## ⚠️ Important Notice
 
 **This is a highly specialized tool built for my personal use.** It contains many hard-coded values, specific game IDs, player configurations, and workflows tailored to my exact needs. While the code is open source for reference and inspiration, it is **not intended as a general-purpose application** and will likely not work out-of-the-box for other users without significant modifications.
