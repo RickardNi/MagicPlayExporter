@@ -180,28 +180,24 @@ public class BgStatsExportService
         {
             return !string.IsNullOrWhiteSpace(deck) ? deck : null;
         }
-        else // Draft
+
+        if (colors.Count == 0)
+            return null;
+
+        var colorMap = new Dictionary<string, string>
         {
-            if (colors.Count == 0)
-                return null;
+            { "W", "White" },
+            { "U", "Blue" },
+            { "B", "Black" },
+            { "R", "Red" },
+            { "G", "Green" }
+        };
 
-            // Map abbreviations to full color names
-            var colorMap = new Dictionary<string, string>
-            {
-                { "W", "White" },
-                { "U", "Blue" },
-                { "B", "Black" },
-                { "R", "Red" },
-                { "G", "Green" }
-            };
+        var fullColorNames = colors
+            .Select(c => colorMap.GetValueOrDefault(c, c))
+            .OrderBy(c => c);
 
-            var fullColorNames = colors
-                .Select(c => colorMap.ContainsKey(c) ? colorMap[c] : c)
-                .OrderBy(c => c)
-                .ToList();
-
-            return string.Join("／", fullColorNames);
-        }
+        return string.Join("／", fullColorNames);
     }
 
     public static string SerializeToJson(ExportModels.BgStatsExport export)

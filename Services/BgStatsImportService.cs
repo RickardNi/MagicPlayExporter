@@ -77,11 +77,8 @@ public class BgStatsImportService
             {
                 foreach (var playerScore in play.PlayerScores)
                 {
-                    if (!playerPlayCounts.ContainsKey(playerScore.PlayerRefId))
-                    {
-                        playerPlayCounts[playerScore.PlayerRefId] = 0;
-                    }
-                    playerPlayCounts[playerScore.PlayerRefId]++;
+                    playerPlayCounts.TryGetValue(playerScore.PlayerRefId, out var count);
+                    playerPlayCounts[playerScore.PlayerRefId] = count + 1;
                 }
             }
 

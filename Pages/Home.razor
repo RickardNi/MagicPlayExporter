@@ -550,7 +550,7 @@
             var dialog = await DialogService.ShowAsync<ValidationDialog>("Export Warning", parameters);
             var result = await dialog.Result;
 
-            if (result.Canceled)
+            if (result is null || result.Canceled)
             {
                 return;
             }
@@ -635,40 +635,32 @@
                 duplicatePlayerRows.Add(rowNumber);
             }
 
-            var hasWinner = !string.IsNullOrWhiteSpace(row.Winner);
-            var validWinner = hasWinner && (row.Winner == "P1" || row.Winner == "P2");
-            if (!validWinner)
+            if (string.IsNullOrWhiteSpace(row.Winner) || (row.Winner != "P1" && row.Winner != "P2"))
             {
                 invalidWinnerRows.Add(rowNumber);
             }
 
-            var hasStartPlayer = !string.IsNullOrWhiteSpace(row.StartingPlayer);
-            var validStartPlayer = hasStartPlayer && (row.StartingPlayer == "P1" || row.StartingPlayer == "P2");
-            if (!validStartPlayer)
+            if (string.IsNullOrWhiteSpace(row.StartingPlayer) || (row.StartingPlayer != "P1" && row.StartingPlayer != "P2"))
             {
                 missingStartPlayerRows.Add(rowNumber);
             }
         }
 
-        var result = new ValidationResult();
         var errorMessages = new List<string>();
 
         if (missingPlayerRows.Count > 0)
         {
-            var rowList = string.Join(", ", missingPlayerRows);
-            errorMessages.Add($"Missing player(s) in row(s): {rowList}");
+            errorMessages.Add($"Missing player(s) in row(s): {string.Join(", ", missingPlayerRows)}");
         }
 
         if (duplicatePlayerRows.Count > 0)
         {
-            var rowList = string.Join(", ", duplicatePlayerRows);
-            errorMessages.Add($"Same player listed twice in row(s): {rowList}");
+            errorMessages.Add($"Same player listed twice in row(s): {string.Join(", ", duplicatePlayerRows)}");
         }
 
         if (invalidWinnerRows.Count > 0)
         {
-            var rowList = string.Join(", ", invalidWinnerRows);
-            errorMessages.Add($"Missing or invalid winner in row(s): {rowList}");
+            errorMessages.Add($"Missing or invalid winner in row(s): {string.Join(", ", invalidWinnerRows)}");
         }
 
         if (errorMessages.Count > 0)
@@ -682,15 +674,14 @@
 
         if (missingStartPlayerRows.Count > 0)
         {
-            var rowList = string.Join(", ", missingStartPlayerRows);
             return new ValidationResult
             {
                 HasWarnings = true,
-                WarningMessages = new List<string> { $"The following row(s) are missing a start player: {rowList}" }
+                WarningMessages = new List<string> { $"The following row(s) are missing a start player: {string.Join(", ", missingStartPlayerRows)}" }
             };
         }
 
-        return result;
+        return new ValidationResult();
     }
 
     private void OnPlayerNameChanged(GameplayRow row, bool isP1, string newPlayerName)
@@ -708,16 +699,15 @@
 
         if (selectedFormat == "Draft" && !string.IsNullOrWhiteSpace(newPlayerName))
         {
-            if (!playerColorsMap.ContainsKey(newPlayerName))
-            {
-                playerColorsMap[newPlayerName] = new HashSet<string>();
-            }
-
             var targetColors = isP1 ? row.P1Colors : row.P2Colors;
             targetColors.Clear();
-            foreach (var color in playerColorsMap[newPlayerName])
+
+            if (playerColorsMap.TryGetValue(newPlayerName, out var savedColors))
             {
-                targetColors.Add(color);
+                foreach (var color in savedColors)
+                {
+                    targetColors.Add(color);
+                }
             }
         }
     }
@@ -727,18 +717,15 @@
         if (string.IsNullOrWhiteSpace(playerName) || selectedFormat != "Draft")
             return;
 
-        if (!playerColorsMap.ContainsKey(playerName))
+        if (!playerColorsMap.TryGetValue(playerName, out var colors))
         {
-            playerColorsMap[playerName] = new HashSet<string>();
+            colors = new HashSet<string>();
+            playerColorsMap[playerName] = colors;
         }
 
-        if (playerColorsMap[playerName].Contains(color))
+        if (!colors.Remove(color))
         {
-            playerColorsMap[playerName].Remove(color);
-        }
-        else
-        {
-            playerColorsMap[playerName].Add(color);
+            colors.Add(color);
         }
 
         foreach (var row in gameplayRows)
@@ -746,17 +733,23 @@
             if (row.Player1 == playerName)
             {
                 row.P1Colors.Clear();
-                foreach (var c in playerColorsMap[playerName])
+                if (playerColorsMap.TryGetValue(playerName, out var playerColors))
                 {
-                    row.P1Colors.Add(c);
+                    foreach (var c in playerColors)
+                    {
+                        row.P1Colors.Add(c);
+                    }
                 }
             }
             if (row.Player2 == playerName)
             {
                 row.P2Colors.Clear();
-                foreach (var c in playerColorsMap[playerName])
+                if (playerColorsMap.TryGetValue(playerName, out var playerColors))
                 {
-                    row.P2Colors.Add(c);
+                    foreach (var c in playerColors)
+                    {
+                        row.P2Colors.Add(c);
+                    }
                 }
             }
         }
@@ -850,7 +843,6 @@
             {
                 gameplayRows.Add(new GameplayRow());
             }
-            isFormDirty = false;
         }
 
         selectedFormat = newFormat;

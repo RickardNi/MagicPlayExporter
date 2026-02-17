@@ -13,7 +13,7 @@
         <MudIconButton Icon="@Icons.Material.Filled.Upload" 
                        Color="Color.Inherit" 
                        OnClick="OpenBgStatsImportDialog"
-                       Title="Import BGStats Data" />
+                       title="Import BGStats Data" />
     </MudAppBar>
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
@@ -36,7 +36,7 @@
         var dialog = await DialogService.ShowAsync<BgStatsImportDialog>("Import BGStats Data", options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is not null && !result.Canceled)
         {
             // Trigger a page refresh by navigating to the same page
             // This will cause Home.razor to reload and fetch fresh data

@@ -4,8 +4,6 @@ namespace MagicPlayExporter;
 
 public class LocalStorageSettings(ILocalStorageService localStorageService) : ISettingsStorage
 {
-    private readonly ILocalStorageService _localStorageService = localStorageService;
-
     public const string Players = "Players";
     public const string GameMetaData = "GameMetaData";
     public const string Game = "Game";
@@ -16,7 +14,7 @@ public class LocalStorageSettings(ILocalStorageService localStorageService) : IS
     {
         try
         {
-            return await _localStorageService.GetItemAsync<T>(key);
+            return await localStorageService.GetItemAsync<T>(key);
         }
         catch (Exception)
         {
@@ -29,7 +27,7 @@ public class LocalStorageSettings(ILocalStorageService localStorageService) : IS
     {
         try
         {
-            await _localStorageService.SetItemAsync(key, value);
+            await localStorageService.SetItemAsync(key, value);
         }
         catch (Exception)
         {
