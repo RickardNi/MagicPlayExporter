@@ -137,7 +137,7 @@
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense"
                                    @onfocus="@(() => OnStartTimeFocus(row, rowIndex))"
-                                   @onblur="@(async () => { OnStartTimeBlur(row); MarkFormDirty(); await SaveFormDataToStorageAsync(); })" />
+                                   @onblur="@(async () => { OnStartTimeBlur(row); await SaveFormDataToStorageAsync(); })" />
                 </div>
 
                 <div class="time-col px-1">
@@ -146,7 +146,7 @@
                                    InputType="InputType.Time"
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense"
-                                   @onblur="@(async () => { MarkFormDirty(); await SaveFormDataToStorageAsync(); })" />
+                                   @onblur="@SaveFormDataToStorageAsync" />
                 </div>
 
                 <div class="duration-col px-1">
@@ -160,10 +160,10 @@
                              IsWinner="@(row.Winner == "P1")"
                              IsStartingPlayer="@(row.StartingPlayer == "P1")"
                              Format="@selectedFormat"
-                             OnWinnerClick="@(async () => { row.Winner = "P1"; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
-                             OnStartingPlayerClick="@(async () => { row.StartingPlayer = "P1"; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
-                             OnPlayerNameChanged="@(async v => { OnPlayerNameChanged(row, true, v); MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
-                             OnDeckChanged="@(async v => { row.Player1Deck = ToFullDeckName(v); MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
+                             OnWinnerClick="@(async () => { row.Winner = "P1"; await SaveFormDataToStorageAsync(); })"
+                             OnStartingPlayerClick="@(async () => { row.StartingPlayer = "P1"; await SaveFormDataToStorageAsync(); })"
+                             OnPlayerNameChanged="@(async v => { OnPlayerNameChanged(row, true, v); await SaveFormDataToStorageAsync(); })"
+                             OnDeckChanged="@(async v => { row.Player1Deck = ToFullDeckName(v); await SaveFormDataToStorageAsync(); })"
                              OnColorClick="@(EventCallback.Factory.Create<string>(this, color => ToggleColorForPlayer(row.Player1, color)))"
                              SearchPlayers="@((value, token) => SearchPlayersForRow(value, token, row.Player2))"
                              SearchDecks="@SearchDecks"
@@ -176,10 +176,10 @@
                              IsWinner="@(row.Winner == "P2")"
                              IsStartingPlayer="@(row.StartingPlayer == "P2")"
                              Format="@selectedFormat"
-                             OnWinnerClick="@(async () => { row.Winner = "P2"; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
-                             OnStartingPlayerClick="@(async () => { row.StartingPlayer = "P2"; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
-                             OnPlayerNameChanged="@(async v => { OnPlayerNameChanged(row, false, v); MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
-                             OnDeckChanged="@(async v => { row.Player2Deck = v; MarkFormDirty(); await SaveFormDataToStorageAsync(); })"
+                             OnWinnerClick="@(async () => { row.Winner = "P2"; await SaveFormDataToStorageAsync(); })"
+                             OnStartingPlayerClick="@(async () => { row.StartingPlayer = "P2"; await SaveFormDataToStorageAsync(); })"
+                             OnPlayerNameChanged="@(async v => { OnPlayerNameChanged(row, false, v); await SaveFormDataToStorageAsync(); })"
+                             OnDeckChanged="@(async v => { row.Player2Deck = v; await SaveFormDataToStorageAsync(); })"
                              OnColorClick="@(EventCallback.Factory.Create<string>(this, color => ToggleColorForPlayer(row.Player2, color)))"
                              SearchPlayers="@((value, token) => SearchPlayersForRow(value, token, row.Player1))"
                              SearchDecks="@SearchDecks"
@@ -320,6 +320,25 @@
         {
             playerList = savedPlayers;
         }
+        else
+        {
+            var hasImportedData = await SettingsStorage.GetSettingAsync<bool>(LocalStorageSettings.HasImportedData);
+            if (!hasImportedData)
+            {
+                playerList = CreateSamplePlayers();
+            }
+        }
+    }
+
+    private List<Player> CreateSamplePlayers()
+    {
+        return
+        [
+            new Player { Id = -1, Name = "Anna Lundgren", IsAnonymous = false, Uuid = Guid.NewGuid().ToString(), NumberOfPlays = 0 },
+            new Player { Id = -2, Name = "Björn Ekström", IsAnonymous = false, Uuid = Guid.NewGuid().ToString(), NumberOfPlays = 0 },
+            new Player { Id = -3, Name = "Carina Holm", IsAnonymous = false, Uuid = Guid.NewGuid().ToString(), NumberOfPlays = 0 },
+            new Player { Id = -4, Name = "Daniel Berg", IsAnonymous = false, Uuid = Guid.NewGuid().ToString(), NumberOfPlays = 0 }
+        ];
     }
 
     private async Task LoadGameMetaDataFromStorageAsync()
@@ -490,7 +509,6 @@
         }
 
         gameplayRows.Remove(row);
-        MarkFormDirty();
         await SaveFormDataToStorageAsync();
     }
 
@@ -754,7 +772,6 @@
             }
         }
 
-        MarkFormDirty();
         await SaveFormDataToStorageAsync();
         StateHasChanged();
     }
@@ -823,7 +840,7 @@
         if (newFormat == selectedFormat)
             return;
 
-        if (isFormDirty)
+        if (gameplayRows.Any(HasRowData))
         {
             bool? result = await DialogService.ShowMessageBox(
                 "Clear Data Required",
@@ -850,11 +867,6 @@
         StateHasChanged();
     }
 
-    private void MarkFormDirty()
-    {
-        isFormDirty = true;
-    }
-
     private async Task ClearAllData()
     {
         bool? result = await DialogService.ShowMessageBox(
@@ -871,7 +883,6 @@
             {
                 gameplayRows.Add(new GameplayRow());
             }
-            isFormDirty = false;
             await SaveFormDataToStorageAsync();
             StateHasChanged();
         }

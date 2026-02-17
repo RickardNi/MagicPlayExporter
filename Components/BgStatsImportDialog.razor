@@ -214,6 +214,8 @@
                 await SettingsStorage.SaveSettingAsync(LocalStorageSettings.Location, importResult.Location);
             }
 
+            await SettingsStorage.SaveSettingAsync(LocalStorageSettings.HasImportedData, true);
+
             NotificationService.NotifyDataImported();
             MudDialog.Close(DialogResult.Ok(true));
         }

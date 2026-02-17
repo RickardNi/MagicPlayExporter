@@ -1,7 +1,9 @@
 ﻿@inherits LayoutComponentBase
 @using MagicPlayExporter.Components
 @using MagicPlayExporter.Services
+@using MagicPlayExporter.Models
 @inject IDialogService DialogService
+@inject ISettingsStorage SettingsStorage
 
 <MudLayout>
 <MudAppBar Elevation="1" Style="background-color: #1c8e55;">
@@ -25,6 +27,17 @@
 @code {
     private async Task OpenBgStatsImportDialog()
     {
+        // Check if there's any actual data in the form
+        var savedFormData = await SettingsStorage.GetSettingAsync<FormData>(LocalStorageSettings.FormData);
+        if (savedFormData != null && HasAnyRowData(savedFormData.GameplayRows))
+        {
+            await DialogService.ShowMessageBox(
+                "Form Contains Data",
+                "Please clear or export your current form data before importing new data.",
+                yesText: "OK");
+            return;
+        }
+
         var options = new DialogOptions 
         { 
             MaxWidth = MaxWidth.Medium, 
@@ -43,5 +56,20 @@
             await Task.Delay(100); // Small delay to ensure storage is updated
             StateHasChanged();
         }
+    }
+
+    private bool HasAnyRowData(List<GameplayRowData> rows)
+    {
+        return rows.Any(row => 
+            row.Player1Id.HasValue
+            || row.Player2Id.HasValue
+            || row.StartTime.HasValue
+            || row.EndTime.HasValue
+            || !string.IsNullOrWhiteSpace(row.Player1Deck)
+            || !string.IsNullOrWhiteSpace(row.Player2Deck)
+            || !string.IsNullOrWhiteSpace(row.Winner)
+            || !string.IsNullOrWhiteSpace(row.StartingPlayer)
+            || row.P1Colors.Count > 0
+            || row.P2Colors.Count > 0);
     }
 }
