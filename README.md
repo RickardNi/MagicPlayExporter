@@ -2,6 +2,8 @@
 
 A Blazor WebAssembly application for creating an import file for BG Stats with Magic: The Gathering gameplay sessions.
 
+**🌐 [Demo](https://rickardni.github.io/MagicPlayExporter/)**
+
 ## What This Tool Does
 
 This is a **data entry and file generation tool** for BG Stats. I track my Magic: The Gathering games on paper during play sessions, then use this tool to digitize that data and generate a properly formatted .bgsplay file that can be imported into the [BG Stats](https://www.bgstatsapp.com/) mobile app.
