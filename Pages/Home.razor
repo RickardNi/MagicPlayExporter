@@ -772,8 +772,8 @@
             }
         }
 
-        await SaveFormDataToStorageAsync();
         StateHasChanged();
+        await SaveFormDataToStorageAsync();
     }
 
     private void OnPlayersImported(List<Player> players)
