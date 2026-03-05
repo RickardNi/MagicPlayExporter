@@ -1,8 +1,10 @@
 @echo off
-netstat -ano | findstr :5028 > nul
+set PORT=5028
+
+netstat -ano | findstr :%PORT% > nul
 if %errorlevel% equ 0 (
-    echo Port 5028 in use, killing process...
-    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5028') do taskkill /F /PID %%a 2>nul
+    echo Port %PORT% in use, killing process...
+    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%PORT%') do taskkill /F /PID %%a 2>nul
 )
 
 dotnet watch run --non-interactive
