@@ -155,11 +155,14 @@ public partial class Home : IDisposable
             {
                 "Draft",
                 "Pick-Two Draft",
+                "Draft End Burn",
+                "Grid Draft",
+                "Minneapolis Draft",
+                "Draft Smaller Packs (5x9)",
+                "Draft Smaller Packs (4x11)",
                 "Sealed",
                 "Winston Draft",
-                "Winchester Draft",
-                "Grid Draft",
-                "Minneapolis Draft"
+                "Winchester Draft"
             };
 
             var predefinedSets = new List<string>
