@@ -25,8 +25,8 @@ public partial class Home : IDisposable
 
     private List<GameplayRow> gameplayRows = new();
 
-    private List<string> availableDraftTypes = new List<string>
-    {
+    private static readonly List<string> PredefinedDraftTypes =
+    [
         "Draft",
         "Pick-Two Draft",
         "Draft End Burn",
@@ -37,14 +37,19 @@ public partial class Home : IDisposable
         "Sealed",
         "Winston Draft",
         "Winchester Draft"
-    };
+    ];
 
-    private List<string> availableSets = new List<string>
-    {
-        "Magic Foundations Cube"
-    };
+    private static readonly List<string> PredefinedSets =
+    [
+        "Magic Foundations Cube",
+        "Twobert Variant Cube",
+        "Gatecrash Cube"
+    ];
 
-    private List<DeckInfo> availableDecks = new();
+    private List<string> availableDraftTypes = [.. PredefinedDraftTypes];
+    private List<string> availableSets = [.. PredefinedSets];
+
+    private List<DeckInfo> availableDecks = [];
 
     private string ToFullDeckName(string displayName)
     {
@@ -151,36 +156,17 @@ public partial class Home : IDisposable
 
         if (gameMetaData?.GameAddedBoards != null && gameMetaData.GameAddedBoards.Count > 0)
         {
-            var predefinedDraftTypes = new List<string>
-            {
-                "Draft",
-                "Pick-Two Draft",
-                "Draft End Burn",
-                "Grid Draft",
-                "Minneapolis Draft",
-                "Draft Smaller Packs (5x9)",
-                "Draft Smaller Packs (4x11)",
-                "Sealed",
-                "Winston Draft",
-                "Winchester Draft"
-            };
-
-            var predefinedSets = new List<string>
-            {
-                "Magic Foundations Cube"
-            };
-
             var importedDraftTypes = gameMetaData.GameAddedBoards
-                .Where(board => predefinedDraftTypes.Contains(board))
+                .Where(board => PredefinedDraftTypes.Contains(board))
                 .ToList();
 
             var importedSets = gameMetaData.GameAddedBoards
-                .Where(board => predefinedSets.Contains(board))
+                .Where(board => PredefinedSets.Contains(board))
                 .ToList();
 
             if (importedDraftTypes.Count > 0)
             {
-                availableDraftTypes = predefinedDraftTypes
+                availableDraftTypes = PredefinedDraftTypes
                     .Where(type => importedDraftTypes.Contains(type))
                     .ToList();
 
@@ -192,7 +178,7 @@ public partial class Home : IDisposable
 
             if (importedSets.Count > 0)
             {
-                availableSets = predefinedSets
+                availableSets = PredefinedSets
                     .Where(set => importedSets.Contains(set))
                     .ToList();
 

@@ -39,7 +39,7 @@ I have vibe-coded this app with different tools, mainly Gemini CLI and GitHub Co
 ### 🎮 Format Support
 - **Draft Format**: 
   - Select from available sets defined in BG Stats app (e.g., Magic Foundations Cube)
-  - Choose draft type (Draft, Pick-Two Draft, Sealed, Winston, Winchester, Grid, Minneapolis)
+  - Choose draft type (Draft, Pick-Two Draft, Sealed, Winston, Winchester, Grid, Minneapolis, etc)
 - **Battle Decks Format**: 
   - Select from pre-configured battle decks from BG Stats app (roles)
   - Deck selection with auto-complete
@@ -76,7 +76,6 @@ This application includes several hard-coded values specific to my setup:
 - **Game ID**: 39 (Magic: The Gathering)
 - **BGG ID**: 463
 - **Location ID**: 16
-- **Default Sets**: Magic Foundations Cube
 - **Draft Types**: Specific list of draft formats I use
 - **Player Filtering**: Minimum 5 plays to be considered "active"
 - **Archived Tag ID**: 3
