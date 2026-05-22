@@ -227,7 +227,7 @@ public partial class Home : IDisposable
 
         if (savedFormData != null)
         {
-            playDate = savedFormData.PlayDate;
+            playDate = savedFormData.PlayDate ?? DateTime.Today;
             selectedFormat = savedFormData.SelectedFormat;
             selectedSet = savedFormData.SelectedSet;
             selectedDraftType = savedFormData.SelectedDraftType;
@@ -684,6 +684,7 @@ public partial class Home : IDisposable
 
         if (result == true)
         {
+            playDate = DateTime.Today;
             gameplayRows.Clear();
             playerColorsMap.Clear();
             for (int i = 0; i < 12; i++)
